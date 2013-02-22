@@ -4,6 +4,7 @@ import Qt 4.7
 
 PlotLine {
     id: line
+    objectName: "line"
     color: "blue"
     width: 50
     height: 50
