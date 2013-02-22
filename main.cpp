@@ -16,16 +16,17 @@ int main(int argc, char *argv[])
 
     QDeclarativeEngine* engine = view.engine();
     QDeclarativeContext* context = engine->rootContext();
-    QDeclarativeItem* rootObj = context->findChild<QDeclarativeItem*>("mychart");
-    Plotline* curve = new Plotline();
-    curve->setParentItem(rootObj);
-    curve->setProperty("color", "red");
-//     curve->setProperty("anchors.fill", "parent");
-    curve->setProperty("width", 300);
-    curve->setProperty("height", 300);
-    view.scene()->addItem(qobject_cast<QDeclarativeItem*>(curve));
+    QDeclarativeItem* rootObj = view.rootObject()->findChild<QDeclarativeItem*>("mychart");
+
+    QDeclarativeComponent component(engine, QUrl::fromLocalFile("ChartLine.qml"));
+    QDeclarativeItem* chartline = qobject_cast<QDeclarativeItem*>(component.create());
+
+    chartline->setParentItem(rootObj);
+    view.scene()->addItem(qobject_cast<QDeclarativeItem*>(chartline));
+    QMetaObject::invokeMethod(chartline, "setup");
 
     view.setGeometry(100, 100, 800, 480);
     view.show();
+
     return a.exec();
 }

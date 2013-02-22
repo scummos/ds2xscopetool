@@ -1,13 +1,15 @@
 import CustomComponents 1.0
 import Qt 4.7
 
+import QtQuick 1.0
+
 Rectangle {
     property bool evenClick : false
 
     anchors.fill: parent; color: "#333333"
 
     Chart {
-        id: mychart
+        objectName: "mychart"
     }
 
 //     PlotLine {
@@ -23,15 +25,15 @@ Rectangle {
 //         color: "red"; penWidth: 1; smooth: true
 //     }
 
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            diagonalLine.viewport.width += 20;
-        }
-    }
+//     MouseArea {
+//         anchors.fill: parent
+//         onClicked: {
+//             diagonalLine.viewport.width += 20;
+//         }
+//     }
 
-    Text {
-        anchors.left: parent.left; anchors.top: parent.top
-        text: "x1: " + diagonalLine.viewport.x + " y1: " + diagonalLine.viewport.y
-    }
+//     Text {
+//         anchors.left: parent.left; anchors.top: parent.top
+//         text: "x1: " + diagonalLine.viewport.x + " y1: " + diagonalLine.viewport.y
+//     }
 }

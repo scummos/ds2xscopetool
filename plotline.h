@@ -77,6 +77,9 @@ public:
 
         painter->setRenderHint(QPainter::Antialiasing, true);
 
+        m_color.setAlpha(5);
+        painter->drawRect(x(), y(), width(), height());
+
         m_color.setAlpha(127);
 
         const QMap<int, float>& points = data->data;
