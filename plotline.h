@@ -47,7 +47,7 @@ class Plotline : public QDeclarativeItem
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged);
     Q_PROPERTY(int penWidth READ penWidth WRITE setPenWidth NOTIFY penWidthChanged);
 
-private:
+public:
     QSharedDataPointer<Channel> data;
 
 public:
@@ -59,10 +59,6 @@ public:
         setFlag(QGraphicsItem::ItemHasNoContents, false);
 
         data = new Channel();
-        for ( int i = 0; i < 3000; i++ ) {
-            data->data[i] = sin(i / 200.0) * 100;
-        }
-        dataRange = QRectF(0, -150, 1000, 300);
 
         connect(this, SIGNAL(dataChanged()), SLOT(slotDataChanged()));
     }
@@ -71,16 +67,9 @@ public:
     {
         QColor paintColor = m_color;
         QPen pen(paintColor, m_penWidth);
-        QBrush brush(m_color);
         painter->setPen(pen);
-        painter->setBrush(brush);
 
         painter->setRenderHint(QPainter::Antialiasing, true);
-
-        m_color.setAlpha(5);
-        painter->drawRect(x(), y(), width(), height());
-
-        m_color.setAlpha(127);
 
         const QMap<int, float>& points = data->data;
         std::function<float(float)> transformYValue = [&](float yValue) -> float {
@@ -136,7 +125,6 @@ public slots:
     };
 
 protected:
-
     QColor m_color;
     int m_penWidth;
     QRectF dataRange;
