@@ -3,7 +3,7 @@ QT       += core gui declarative
 TARGET = qmlapp
 TEMPLATE = app
 
-SOURCES += main.cpp
-HEADERS  += plotline.h
+SOURCES += main.cpp abstracttmcdevice.cpp linuxtmcdevice.cpp deviceCommunicationThread.cpp channelController.cpp
+HEADERS  += plotline.h linuxtmcdevice.h abstracttmcdevice.h deviceCommunicationThread.h channelController.h
 OTHER_FILES += ui.qml
-QMAKE_CXXFLAGS += -std=c++0x
+QMAKE_CXXFLAGS += -std=c++0x -g
