@@ -43,8 +43,6 @@ struct Channel : public QSharedData {
 class Plotline : public QDeclarativeItem
 {
     Q_OBJECT
-    // viewport
-    Q_PROPERTY(QRectF viewport READ getViewport WRITE setViewport NOTIFY viewportChanged);
     Q_PROPERTY(QRectF dataRange READ getDataRange WRITE setDataRange NOTIFY dataRangeChanged);
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged);
     Q_PROPERTY(int penWidth READ penWidth WRITE setPenWidth NOTIFY penWidthChanged);
@@ -54,7 +52,7 @@ private:
 
 public:
     Plotline(QDeclarativeItem *parent = 0) :
-        QDeclarativeItem(parent), viewport(QRectF(0, 0, 0, 0)),
+        QDeclarativeItem(parent),
         m_color(Qt::black), m_penWidth(1)
     {
         // Important, otherwise the paint method is never cdelayalled
@@ -65,13 +63,13 @@ public:
             data->data[i] = sin(i / 200.0) * 100;
         }
         dataRange = QRectF(0, -150, 1000, 300);
-        qDebug() << dataRange.bottom();
+
+        connect(this, SIGNAL(dataChanged()), SLOT(slotDataChanged()));
     }
 
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
     {
         QColor paintColor = m_color;
-        paintColor.setAlpha(50);
         QPen pen(paintColor, m_penWidth);
         QBrush brush(m_color);
         painter->setPen(pen);
@@ -79,15 +77,14 @@ public:
 
         painter->setRenderHint(QPainter::Antialiasing, true);
 
-        painter->drawRect(viewport);
         m_color.setAlpha(127);
 
         const QMap<int, float>& points = data->data;
         std::function<float(float)> transformYValue = [&](float yValue) -> float {
-            return -(yValue - dataRange.bottom()) * viewport.height() / dataRange.height() + viewport.top();
+            return -(yValue - dataRange.bottom()) * height() / dataRange.height();
         };
         std::function<float(float)> transformXValue = [&](float xValue) -> float {
-            return (xValue - dataRange.left()) * viewport.width() / dataRange.width() + viewport.left();
+            return (xValue - dataRange.left()) * width() / dataRange.width();
         };
         foreach ( const int key, points.keys() ) {
             // TODO slow, could do interval-halving for monotonous x coords
@@ -95,23 +92,14 @@ public:
             if ( dataRange.left() < x && dataRange.right() > x ) {
                 QPointF start(transformXValue(x), transformYValue(points[x]));
                 QPointF end(transformXValue(data->indexToFloat(key+1))-dataRange.left(), transformYValue(points[x+1]));
-                qDebug() << start << end;
                 painter->drawLine(start, end);
             }
         }
     }
 
-    QRectF getViewport() const { return viewport; }
     QRectF getDataRange() const { return dataRange; }
     QColor color() const { return m_color; }
     int penWidth() const { return m_penWidth; }
-
-    void setViewport(const QRectF& newViewport) {
-        viewport = newViewport;
-        emit viewportChanged();
-        updateSize();
-        update();
-    }
 
     void setColor(const QColor &color) {
         if(m_color == color) return;
@@ -129,7 +117,6 @@ public:
     void setPenWidth(int newWidth) {
         if(m_penWidth == newWidth) return;
         m_penWidth = newWidth;
-        updateSize();
         emit penWidthChanged();
         update();
     }
@@ -137,21 +124,18 @@ public:
 signals:
     void colorChanged();
     void penWidthChanged();
-    void viewportChanged();
     void dataRangeChanged();
+    void dataChanged();
+
+public slots:
+    void slotDataChanged() {
+        update();
+    };
 
 protected:
-    void updateSize() {
-        setX(viewport.left());
-        setY(viewport.top());
-        setWidth(viewport.width() + viewport.left());
-        setHeight(viewport.height() + viewport.top());
-    }
 
-protected:
     QColor m_color;
     int m_penWidth;
-    QRectF viewport;
     QRectF dataRange;
 };
 

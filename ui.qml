@@ -4,20 +4,24 @@ import Qt 4.7
 Rectangle {
     property bool evenClick : false
 
-    anchors.fill: parent; color: "lightsteelblue"
+    anchors.fill: parent; color: "#333333"
 
-    PlotLine {
-        id: diagonalLine
-
-        viewport {
-            width: 100
-            height: 100
-            x: 20
-            y: 20
-        }
-
-        color: "red"; penWidth: 1; smooth: true
+    Chart {
+        id: mychart
     }
+
+//     PlotLine {
+//         id: diagonalLine
+//
+//         viewport {
+//             width: 100
+//             height: 100
+//             x: 20
+//             y: 20
+//         }
+//
+//         color: "red"; penWidth: 1; smooth: true
+//     }
 
     MouseArea {
         anchors.fill: parent
