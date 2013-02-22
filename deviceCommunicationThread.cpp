@@ -21,21 +21,17 @@ void DeviceCommunicationWorker::doWork()
         sleep(1);
     }
     while ( true ) {
-        requestsLock.lock();
+        QMutexLocker lock(&requestsLock);
+        if ( requests.isEmpty() ) {
+            return;
+        }
         CommunicationRequest* request = requests.dequeue();
-        requestsLock.unlock();
+        lock.unlock();
 
         CommunicationReply* reply = request->execute(device);
-        qDebug() << "got reply: " << reply << reply->status << reply->reply;
         QMetaObject::invokeMethod(request->notifyReady, request->notifyMethod.toAscii(),
                                   Qt::DirectConnection, Q_ARG(CommunicationReply*, reply));
         delete request;
-
-        requestsLock.lock();
-        if ( requests.isEmpty() ) {
-            break;
-        }
-        requestsLock.unlock();
     }
 }
 
@@ -44,5 +40,5 @@ void DeviceCommunicationWorker::enqueue(CommunicationRequest* request)
     requestsLock.lock();
     requests.enqueue(request);
     requestsLock.unlock();
-    doWork();
+    QMetaObject::invokeMethod(this, "doWork");
 }

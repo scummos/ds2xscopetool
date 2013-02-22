@@ -5,6 +5,9 @@
 #include <QQueue>
 #include <QMutex>
 #include <QSharedPointer>
+#include <QDebug>
+#include <unistd.h>
+
 #include "tmcdevice.h"
 
 struct CommunicationReply {
@@ -25,6 +28,7 @@ struct CommunicationRequest {
     unsigned long requestIdentifier;
     CommunicationRequest(QObject* notifyReady, QString notifyMethod, unsigned long requestIdentifier = 0)
      : notifyReady(notifyReady), notifyMethod(notifyMethod), requestIdentifier(requestIdentifier) { };
+    virtual ~CommunicationRequest() {  };
 
     virtual CommunicationReply* execute(TMCDevice* device) = 0;
 };
@@ -54,6 +58,31 @@ struct WriteCommandCommunicationRequest : public CommunicationRequest {
     };
 };
 
+struct ReadChannelDataCommunicationRequest : public CommunicationRequest {
+    ReadChannelDataCommunicationRequest(QObject* notifyReady, QString notifyMethod, long unsigned int requestIdentifier = 0)
+     : CommunicationRequest(notifyReady, notifyMethod, requestIdentifier)
+     , readMode(Displayed) { };
+    enum Mode {
+        Displayed,
+        Full
+    };
+    QString channel;
+    Mode readMode;
+    virtual CommunicationReply* execute(TMCDevice* device) {
+        Q_ASSERT(Mode == Displayed); // FIXME
+        Q_ASSERT(channel != QString::null);
+        device->write(":wav:source " + channel.toAscii() + "\n");
+        device->write(":wav:mode norm\n");
+        device->write(":wav:format word\n");
+        device->write(":wav:data?\n");
+        QByteArray data = device->readReplyData();
+        CommunicationReply* reply = new CommunicationReply;
+        reply->reply = data;
+        reply->status = CommunicationReply::Success;
+        return reply;
+    };
+};
+
 class DeviceCommunicationWorker : public QObject {
     Q_OBJECT
 public:
@@ -63,8 +92,9 @@ public slots:
     // The request is deleted when it has been handled.
     void enqueue(CommunicationRequest* request);
 
-private:
+private slots:
     void doWork();
+private:
     CommunicationReply* processRequest(CommunicationRequest* request);
 
     TMCDevice* device;

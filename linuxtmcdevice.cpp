@@ -18,12 +18,14 @@
  */
 
 #include "linuxtmcdevice.h"
+#include <QFile>
+#include <QDebug>
 
 LinuxTMCDevice::LinuxTMCDevice(const QString& deviceFileName)
     : deviceFileName(deviceFileName)
 {
     deviceFile.setFileName(deviceFileName);
-    deviceFile.open(QIODevice::ReadWrite);
+    deviceFile.open(QIODevice::ReadWrite | QIODevice::Unbuffered);
 }
 
 LinuxTMCDevice::~LinuxTMCDevice()
@@ -33,15 +35,11 @@ LinuxTMCDevice::~LinuxTMCDevice()
 
 QByteArray LinuxTMCDevice::read(int bytes)
 {
-    if ( bytes == -1 ) {
-        return deviceFile.readAll();
+    if ( bytes < 0 ) {
+        return deviceFile.read(8192);
     }
     else {
-        QByteArray data;
-        while ( data.length() < bytes ) {
-            data += deviceFile.read(bytes);
-        }
-        return data;
+        return deviceFile.read(bytes);
     }
 }
 

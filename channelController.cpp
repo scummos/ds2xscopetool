@@ -1,4 +1,5 @@
 #include "channelController.h"
+#include "utils.h"
 #include <qdatetime.h>
 
 ChannelController::ChannelController(QDeclarativeItem* curve)
@@ -29,7 +30,7 @@ void ChannelController::setUpdateType(ChannelController::UpdateType type)
     }
 }
 
-void ChannelController::doSingleUpdate()
+void ChannelController::redraw()
 {
     curve->slotDataChanged();
 }
@@ -37,13 +38,50 @@ void ChannelController::doSingleUpdate()
 ScopeChannelController::ScopeChannelController(QDeclarativeItem* curve, DeviceCommunicationWorker* worker)
     : ChannelController(curve)
     , worker(worker)
+    , channel("CHAN1")
 {
     Q_ASSERT(worker && "must provide a valid worker thread");
 }
 
 void ScopeChannelController::doSingleUpdate()
 {
-    curve->data->data[20] = QDateTime::currentMSecsSinceEpoch() % 11;
-    qDebug() << "updating curve data" << QDateTime::currentMSecsSinceEpoch() % 11;
-    ChannelController::doSingleUpdate();
+    ReadChannelDataCommunicationRequest* req = new ReadChannelDataCommunicationRequest(this, "updateReady");
+    req->channel = channel;
+    worker->enqueue(req);
 }
+
+void ScopeChannelController::updateReady(CommunicationReply* reply)
+{
+    curve->data->data = Utils::parseScopeChannelReply(reply->reply);
+    delete reply;
+    ChannelController::redraw();
+}
+
+
+JSDefinedChannelController::JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList< Plotline* > inputChannels)
+    : ChannelController(curve)
+    , inputChannels(inputChannels)
+    , textArea(textArea)
+{
+    QObject::connect(textArea, SIGNAL(textChanged(const QString&)), this, SLOT(doUpdate(const QString&)));
+    doUpdate(QString::null);
+}
+
+void JSDefinedChannelController::doUpdate(const QString& text)
+{
+    QVariant returnedValue;
+    float y1, y2;
+    QTime t;
+    t.start();
+    for ( int i = 0; i < qMin(inputChannels[0]->data->data.size(), inputChannels[1]->data->data.size()); i++ ) {
+        y1 = inputChannels[0]->data->data[i];
+        y2 = inputChannels[1]->data->data[i];
+        QMetaObject::invokeMethod(textArea, "doCalculation", Q_RETURN_ARG(QVariant, returnedValue),
+                                  Q_ARG(QVariant, y1), Q_ARG(QVariant, y2), Q_ARG(QVariant, text));
+        curve->data->data[i] = returnedValue.toFloat();
+    }
+    qDebug() << "JS function evaluation took " << t.elapsed() << "ms";
+    ChannelController::redraw();
+}
+
+

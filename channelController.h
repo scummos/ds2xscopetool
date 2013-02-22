@@ -22,7 +22,7 @@ public:
 public slots:
     // Make sure to call this default implementation from derived classes,
     // after the code of the derived class has run
-    void doSingleUpdate();
+    void redraw();
 
 protected:
     Plotline* curve;
@@ -38,10 +38,23 @@ class ScopeChannelController : public ChannelController {
 Q_OBJECT
 public:
     ScopeChannelController(QDeclarativeItem* curve, DeviceCommunicationWorker* worker);
+    QString channel;
 public slots:
     virtual void doSingleUpdate();
+    void updateReady(CommunicationReply* reply);
 private:
     DeviceCommunicationWorker* worker;
+};
+
+class JSDefinedChannelController : public ChannelController {
+Q_OBJECT
+public:
+    JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList<Plotline*> inputChannels);
+public slots:
+    virtual void doUpdate(const QString& text);
+private:
+    QList<Plotline*> inputChannels;
+    QDeclarativeItem* textArea;
 };
 
 #endif
