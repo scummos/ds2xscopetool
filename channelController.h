@@ -52,6 +52,7 @@ public:
     JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList<Plotline*> inputChannels);
 public slots:
     virtual void doUpdate(const QString& text);
+    virtual void doUpdate();
 private:
     QList<Plotline*> inputChannels;
     QDeclarativeItem* textArea;

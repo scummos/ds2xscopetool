@@ -3,8 +3,8 @@ import Qt 4.7
 
 Rectangle {
     id: canvas
-    width: 600
-    height: 400
+    width: 800
+    height: 480
     color: "#333333"
     property color textColor: "white"
     property int fontSize: 6

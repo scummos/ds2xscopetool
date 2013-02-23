@@ -113,6 +113,10 @@ public:
         update();
     }
 
+    void notifyDataChanged() {
+        emit dataChanged();
+    }
+
 signals:
     void colorChanged();
     void penWidthChanged();

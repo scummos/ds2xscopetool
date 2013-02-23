@@ -4,7 +4,7 @@
 
 ChannelController::ChannelController(QDeclarativeItem* curve)
     : curve(qobject_cast<Plotline*>(curve))
-    , updateInterval(50)
+    , updateInterval(75)
     , updateType(SingleShot)
 {
     Q_ASSERT(curve && "must pass a PlotLine object as curve");
@@ -32,7 +32,7 @@ void ChannelController::setUpdateType(ChannelController::UpdateType type)
 
 void ChannelController::redraw()
 {
-    curve->slotDataChanged();
+    curve->notifyDataChanged();
 }
 
 ScopeChannelController::ScopeChannelController(QDeclarativeItem* curve, DeviceCommunicationWorker* worker)
@@ -57,14 +57,23 @@ void ScopeChannelController::updateReady(CommunicationReply* reply)
     ChannelController::redraw();
 }
 
-
 JSDefinedChannelController::JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList< Plotline* > inputChannels)
     : ChannelController(curve)
     , inputChannels(inputChannels)
     , textArea(textArea)
 {
     QObject::connect(textArea, SIGNAL(textChanged(const QString&)), this, SLOT(doUpdate(const QString&)));
+    foreach ( const Plotline* chan, inputChannels ) {
+        QObject::connect(chan, SIGNAL(dataChanged()), this, SLOT(doUpdate()));
+        QObject::connect(chan, SIGNAL(dataRangeChanged()), this, SLOT(doUpdate()));
+    }
     doUpdate(QString::null);
+}
+
+void JSDefinedChannelController::doUpdate()
+{
+    QString text = textArea->property("text").toString();
+    doUpdate(text);
 }
 
 void JSDefinedChannelController::doUpdate(const QString& text)
