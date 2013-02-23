@@ -8,10 +8,13 @@
 #include "plotline.h"
 #include "deviceCommunicationThread.h"
 #include "channelController.h"
+#include "settingsController.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    qRegisterMetaType<CommunicationReply*>("CommunicationReply*");
 
     QThread* thread = new QThread();
     DeviceCommunicationWorker* worker = new DeviceCommunicationWorker();

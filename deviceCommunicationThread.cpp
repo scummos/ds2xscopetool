@@ -30,7 +30,7 @@ void DeviceCommunicationWorker::doWork()
 
         CommunicationReply* reply = request->execute(device);
         QMetaObject::invokeMethod(request->notifyReady, request->notifyMethod.toAscii(),
-                                  Qt::DirectConnection, Q_ARG(CommunicationReply*, reply));
+                                  Qt::QueuedConnection, Q_ARG(CommunicationReply*, reply));
         delete request;
     }
 }
