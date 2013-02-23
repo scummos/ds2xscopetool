@@ -59,6 +59,8 @@ Rectangle {
         ]
         ListView {
             id: menuButtonList
+            objectName: "menuButtonList"
+            signal paramChanged(string name, variant newValue)
             anchors.margins: 50
             height: canvas.height
             onCurrentItemChanged: {
@@ -66,9 +68,10 @@ Rectangle {
                 console.log(currentItem.ListView.isCurrentItem)
             }
             model: ListModel {
+                id: menuSettings
                 ListElement {
                     text: "Acq: %r"
-                    toggleValues: [ ListElement { value: "Full" } , ListElement { value: "Displayed" } ]
+                    toggleValues: [ ListElement { value: "Full" }, ListElement { value: "Displayed" } ]
                     notifyParamName: "AcquisitionMode"
                 }
                 ListElement {
@@ -78,12 +81,41 @@ Rectangle {
                     ]
                     notifyParamName: "AcquisitionTime"
                 }
+                ListElement {
+                    text: "Update: %r"
+                    toggleValues: [ ListElement { value: "Auto" }, ListElement { value: "Freeze" } ]
+                    notifyParamName: "UpdateType"
+                }
             }
             delegate: Rectangle {
                 id: wrapper
                 state: ListView.isCurrentItem ? "SelectedState" : "NormalState"
                 onStateChanged: button.state = state
                 property int selected: 0
+                ListView {
+                    rotation: 180
+                    width: 300
+                    x: -300
+                    opacity: wrapper.ListView.isCurrentItem ? 0.8 : 0.2
+                    Behavior on opacity { NumberAnimation { duration: 100 } }
+                    z: 30
+                    model: toggleValues
+                    orientation: ListView.Horizontal
+                    delegate: Rectangle {
+                        rotation: 180
+                        width: text.width + 8
+                        Text {
+                            y: 5
+                            horizontalAlignment: Text.AlignRight
+                            id: text
+                            property int reversedIndex: toggleValues.count - index - 1
+                            text: toggleValues.get(reversedIndex).value
+                            color: menuButtonList.currentItem.selected == (reversedIndex) && wrapper.ListView.isCurrentItem ? "#FF8400" : "white"
+                            Behavior on color { ColorAnimation { duration: 100 } }
+                        }
+                    }
+                }
+                onSelectedChanged: menuButtonList.paramChanged(notifyParamName, toggleValues.get(parent.selected).value)
                 MenuButton {
                     id: button
                     buttonText: {
