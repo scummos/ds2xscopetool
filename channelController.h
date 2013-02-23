@@ -7,6 +7,8 @@
 #include "deviceCommunicationThread.h"
 #include "plotline.h"
 
+class SettingsController;
+
 class ChannelController : public QObject {
 Q_OBJECT
 public:
@@ -16,23 +18,23 @@ public:
     };
 
     ChannelController(QDeclarativeItem* curve);
+    virtual void connectToSettingsController(const SettingsController* controller);
 public slots:
-    void setUpdateType(UpdateType type);
+    void setUpdateType(ChannelController::UpdateType type);
     void setUpdateInterval(int msecs);
 
-public slots:
     // Make sure to call this default implementation from derived classes,
     // after the code of the derived class has run
     void redraw();
 
 protected:
     Plotline* curve;
+    QTimer updateTimer;
 
 private:
-    UpdateType updateType;
     // the update interval, in milliseconds
     int updateInterval;
-    QTimer updateTimer;
+    UpdateType updateType;
 };
 
 class ScopeChannelController : public ChannelController {
@@ -42,7 +44,7 @@ public:
         Displayed,
         Full
     };
-    
+
     ScopeChannelController(QDeclarativeItem* curve, DeviceCommunicationWorker* worker);
     QString channel;
 public slots:

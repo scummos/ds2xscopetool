@@ -36,6 +36,9 @@ int main(int argc, char *argv[])
     QDeclarativeEngine* engine = view.engine();
     QDeclarativeContext* context = engine->rootContext();
     QDeclarativeItem* rootObj = view.rootObject()->findChild<QDeclarativeItem*>("mychart");
+    SettingsController* settingsController = new SettingsController();
+    QObject::connect(view.rootObject()->findChild<QObject*>("menuButtonList"), SIGNAL(paramChanged(QString, QVariant)),
+                     settingsController, SLOT(settingChanged(QString, QVariant)));
 
     QDeclarativeComponent component(engine, QUrl::fromLocalFile("ChartLine.qml"));
 
@@ -47,6 +50,7 @@ int main(int argc, char *argv[])
     ScopeChannelController* controller = new ScopeChannelController(channel1, worker);
     controller->channel = "CHAN1";
     controller->setUpdateType(ChannelController::Periodically);
+    controller->connectToSettingsController(settingsController);
 
     QDeclarativeItem* channel2 = qobject_cast<QDeclarativeItem*>(component.create());
     channel2->setParentItem(rootObj);
@@ -56,6 +60,7 @@ int main(int argc, char *argv[])
     ScopeChannelController* controller2 = new ScopeChannelController(channel2, worker);
     controller2->channel = "CHAN2";
     controller2->setUpdateType(ChannelController::Periodically);
+    controller2->connectToSettingsController(settingsController);
 
     QDeclarativeItem* jsMathLine = qobject_cast<QDeclarativeItem*>(component.create());
     jsMathLine->setParentItem(rootObj);

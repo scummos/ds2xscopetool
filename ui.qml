@@ -115,7 +115,7 @@ Rectangle {
                         }
                     }
                 }
-                onSelectedChanged: menuButtonList.paramChanged(notifyParamName, toggleValues.get(parent.selected).value)
+                onSelectedChanged: menuButtonList.paramChanged(notifyParamName, toggleValues.get(wrapper.selected).value)
                 MenuButton {
                     id: button
                     buttonText: {

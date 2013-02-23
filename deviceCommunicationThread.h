@@ -6,6 +6,7 @@
 #include <QMutex>
 #include <QSharedPointer>
 #include <QDebug>
+#include <QMetaType>
 #include <unistd.h>
 
 #include "tmcdevice.h"

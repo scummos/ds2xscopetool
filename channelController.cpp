@@ -1,10 +1,12 @@
 #include "channelController.h"
 #include "utils.h"
+#include "settingsController.h"
+
 #include <qdatetime.h>
 
 ChannelController::ChannelController(QDeclarativeItem* curve)
     : curve(qobject_cast<Plotline*>(curve))
-    , updateInterval(75)
+    , updateInterval(50)
     , updateType(SingleShot)
 {
     Q_ASSERT(curve && "must pass a PlotLine object as curve");
@@ -14,6 +16,9 @@ void ChannelController::setUpdateInterval(int msecs)
 {
     Q_ASSERT(updateInterval > 0 && "update interval must be positive");
     updateInterval = msecs;
+    updateTimer.stop();
+    updateTimer.setInterval(updateInterval);
+    updateTimer.start();
 }
 
 void ChannelController::setUpdateType(ChannelController::UpdateType type)
@@ -22,12 +27,19 @@ void ChannelController::setUpdateType(ChannelController::UpdateType type)
     if ( type == Periodically ) {
         updateTimer.setSingleShot(false);
         updateTimer.setInterval(updateInterval);
-        QObject::connect(&updateTimer, SIGNAL(timeout()), this, SLOT(doSingleUpdate()));
         updateTimer.start();
     }
     else {
         updateTimer.stop();
     }
+}
+
+void ChannelController::connectToSettingsController(const SettingsController* controller)
+{
+    QObject::connect(controller, SIGNAL(updateTypeChanged(ChannelController::UpdateType)),
+                     this, SLOT(setUpdateType(ChannelController::UpdateType)));
+    QObject::connect(controller, SIGNAL(updateIntervalChanged(int)),
+                     this, SLOT(setUpdateInterval(int)));
 }
 
 void ChannelController::redraw()
@@ -37,10 +49,11 @@ void ChannelController::redraw()
 
 ScopeChannelController::ScopeChannelController(QDeclarativeItem* curve, DeviceCommunicationWorker* worker)
     : ChannelController(curve)
-    , worker(worker)
     , channel("CHAN1")
+    , worker(worker)
 {
     Q_ASSERT(worker && "must provide a valid worker thread");
+    QObject::connect(&updateTimer, SIGNAL(timeout()), this, SLOT(doSingleUpdate()));
 }
 
 void ScopeChannelController::doSingleUpdate()
