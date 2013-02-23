@@ -16,6 +16,7 @@ public:
     };
 
     ChannelController(QDeclarativeItem* curve);
+public slots:
     void setUpdateType(UpdateType type);
     void setUpdateInterval(int msecs);
 
@@ -37,6 +38,11 @@ private:
 class ScopeChannelController : public ChannelController {
 Q_OBJECT
 public:
+    enum AcquisitionType {
+        Displayed,
+        Full
+    };
+    
     ScopeChannelController(QDeclarativeItem* curve, DeviceCommunicationWorker* worker);
     QString channel;
 public slots:
