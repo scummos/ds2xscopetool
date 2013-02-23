@@ -63,7 +63,7 @@ public:
         connect(this, SIGNAL(dataChanged()), SLOT(slotDataChanged()));
     }
 
-    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)
     {
         QColor paintColor = m_color;
         QPen pen(paintColor, m_penWidth);

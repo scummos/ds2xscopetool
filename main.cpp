@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
     view.setResizeMode(QDeclarativeView::SizeRootObjectToView);
 
     QDeclarativeEngine* engine = view.engine();
-    QDeclarativeContext* context = engine->rootContext();
     QDeclarativeItem* rootObj = view.rootObject()->findChild<QDeclarativeItem*>("mychart");
     SettingsController* settingsController = new SettingsController();
     QObject::connect(view.rootObject()->findChild<QObject*>("menuButtonList"), SIGNAL(paramChanged(QString, QVariant)),
@@ -70,7 +69,7 @@ int main(int argc, char *argv[])
     QDeclarativeItem* textArea = view.rootObject()->findChild<QDeclarativeItem*>("jsChannel");
     QList<Plotline*> lines;
     lines << qobject_cast<Plotline*>(channel1) << qobject_cast<Plotline*>(channel2);
-    JSDefinedChannelController* jsController = new JSDefinedChannelController(jsMathLine, textArea, lines);
+    new JSDefinedChannelController(jsMathLine, textArea, lines);
 
     view.setGeometry(100, 100, 800, 480);
     view.show();
