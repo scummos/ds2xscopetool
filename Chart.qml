@@ -5,7 +5,7 @@ Rectangle {
     id: canvas
     width: 800
     height: 480
-    color: "#333333"
+    color: "#111111"
     property color textColor: "white"
     property int fontSize: 6
 
@@ -17,7 +17,7 @@ Rectangle {
         Rectangle {
             width: 1
             height: canvas.height
-            color: { index == 7 ? "#FFCCCCCC" : "#77CCCCCC" }
+            color: { index == 7 ? "#77CCCCCC" : "#44CCCCCC" }
             x: canvas.width / 14 * index
             y: 0
         }
@@ -29,7 +29,7 @@ Rectangle {
         Rectangle {
             width: canvas.width
             height: 1
-            color: { index == 5 ? "#FFCCCCCC" : "#77CCCCCC" }
+            color: { index == 5 ? "#77CCCCCC" : "#44CCCCCC" }
             x: 0
             y: canvas.height / 10 * index
         }

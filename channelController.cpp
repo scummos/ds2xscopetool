@@ -89,7 +89,7 @@ void JSDefinedChannelController::doUpdate(const QString& text)
                                   Q_ARG(QVariant, y1), Q_ARG(QVariant, y2), Q_ARG(QVariant, text));
         curve->data->data[i] = returnedValue.toFloat();
     }
-    qDebug() << "JS function evaluation took " << t.elapsed() << "ms";
+//     qDebug() << "JS function evaluation took " << t.elapsed() << "ms";
     ChannelController::redraw();
 }
 
