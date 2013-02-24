@@ -6,10 +6,11 @@
 
 ChannelController::ChannelController(QDeclarativeItem* curve)
     : curve(qobject_cast<Plotline*>(curve))
-    , updateInterval(50)
     , updateType(SingleShot)
+    , updateInterval(50)
 {
     Q_ASSERT(curve && "must pass a PlotLine object as curve");
+    updateTimer.setSingleShot(true);
 }
 
 void ChannelController::setUpdateInterval(int msecs)
@@ -24,13 +25,8 @@ void ChannelController::setUpdateInterval(int msecs)
 void ChannelController::setUpdateType(ChannelController::UpdateType type)
 {
     updateType = type;
-    if ( type == Periodically ) {
-        updateTimer.setSingleShot(false);
-        updateTimer.setInterval(updateInterval);
+    if ( updateType == Periodically ) {
         updateTimer.start();
-    }
-    else {
-        updateTimer.stop();
     }
 }
 
@@ -65,9 +61,13 @@ void ScopeChannelController::doSingleUpdate()
 
 void ScopeChannelController::updateReady(CommunicationReply* reply)
 {
-    curve->data->data = Utils::parseScopeChannelReply(reply->reply);
+    ScopeChannelDataCommunicationReply* scopeReply = static_cast<ScopeChannelDataCommunicationReply*>(reply);
+    curve->data->data = Utils::parseScopeChannelReply(reply->reply, scopeReply->yref, scopeReply->scale, scopeReply->offset);
     delete reply;
     ChannelController::redraw();
+    if ( updateType == Periodically ) {
+        updateTimer.start();
+    }
 }
 
 JSDefinedChannelController::JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList< Plotline* > inputChannels)
@@ -105,5 +105,24 @@ void JSDefinedChannelController::doUpdate(const QString& text)
 //     qDebug() << "JS function evaluation took " << t.elapsed() << "ms";
     ChannelController::redraw();
 }
+
+FixedFunctionChannelController::FixedFunctionChannelController(QDeclarativeItem* curve, Plotline* channel1, Plotline* channel2)
+    : ChannelController(curve)
+    , channel1(channel1)
+    , channel2(channel2)
+{
+
+}
+
+void FixedFunctionChannelController::setOperationMode(FixedFunctionChannelController::OperationMode newMode)
+{
+    operationMode = newMode;
+}
+
+void FixedFunctionChannelController::doUpdate()
+{
+    curve->data->data = Utils::crossCorrelation(channel1->data->data, channel2->data->data);
+}
+
 
 

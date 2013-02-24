@@ -30,11 +30,11 @@ public slots:
 protected:
     Plotline* curve;
     QTimer updateTimer;
+    UpdateType updateType;
 
 private:
     // the update interval, in milliseconds
     int updateInterval;
-    UpdateType updateType;
 };
 
 class ScopeChannelController : public ChannelController {
@@ -64,6 +64,23 @@ public slots:
 private:
     QList<Plotline*> inputChannels;
     QDeclarativeItem* textArea;
+};
+
+class FixedFunctionChannelController : public ChannelController {
+Q_OBJECT
+public:
+    FixedFunctionChannelController(QDeclarativeItem* curve, Plotline* channel1, Plotline* channel2);
+    enum OperationMode {
+        CrossCorrelation,
+        FourierTransform
+    };
+public slots:
+    virtual void doUpdate();
+    virtual void setOperationMode(FixedFunctionChannelController::OperationMode newMode);
+private:
+    Plotline* channel1;
+    Plotline* channel2;
+    OperationMode operationMode;
 };
 
 #endif

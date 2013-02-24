@@ -85,6 +85,7 @@ public:
                 QPointF start(transformXValue(x), transformYValue(points[x]));
                 QPointF end(transformXValue(data->indexToFloat(key+1))-dataRange.left(), transformYValue(points[x+1]));
                 painter->drawLine(start, end);
+//                 qDebug() << start << end;
             }
         }
     }

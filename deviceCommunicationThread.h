@@ -20,6 +20,12 @@ struct CommunicationReply {
     QByteArray reply;
 };
 
+struct ScopeChannelDataCommunicationReply : public CommunicationReply {
+    char yref;
+    float scale;
+    float offset;
+};
+
 struct CommunicationRequest {
     // invoke notifyMethod on notifyReady when done.
     // ownership of the reply data must be taken by the notified method!
@@ -74,11 +80,14 @@ struct ReadChannelDataCommunicationRequest : public CommunicationRequest {
         Q_ASSERT(channel != QString::null);
         device->write(":wav:source " + channel.toAscii() + "\n");
         device->write(":wav:mode norm\n");
-        device->write(":wav:format word\n");
+        device->write(":wav:format byte\n");
         device->write(":wav:data?\n");
         QByteArray data = device->readReplyData();
-        CommunicationReply* reply = new CommunicationReply;
+        ScopeChannelDataCommunicationReply* reply = new ScopeChannelDataCommunicationReply;
         reply->reply = data;
+        reply->yref = device->ask(":wav:yref?").trimmed().toInt();
+        reply->scale = device->ask(":" + channel.toAscii() + ":scale?").trimmed().toFloat();
+        reply->offset = device->ask(":" + channel.toAscii() + ":offset?").trimmed().toFloat();
         reply->status = CommunicationReply::Success;
         return reply;
     };
