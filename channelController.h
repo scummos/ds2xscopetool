@@ -14,7 +14,7 @@ class ChannelController : public QObject {
 Q_OBJECT
 public:
     enum UpdateType {
-        SingleShot,
+        Freeze,
         Periodically
     };
 
@@ -37,8 +37,6 @@ protected:
     PlotLine* curve;
     QTimer updateTimer;
     UpdateType updateType;
-
-private:
     // the update interval, in milliseconds
     int updateInterval;
 };
@@ -67,23 +65,30 @@ private:
 class JSDefinedChannelController : public ChannelController {
 Q_OBJECT
 public:
+    enum OperationMode {
+        JSMath,
+        JSMeasurementHistory
+    };
     JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList<PlotLine*> inputChannels);
 public slots:
     virtual void doUpdate(const QString& text);
     virtual void doUpdate();
+    virtual void changeChannelMode(QString channel, QString newMode);
+    virtual void scheduleUpdate();
 private:
     QList<PlotLine*> inputChannels;
     QDeclarativeItem* textArea;
+    OperationMode operationMode;
 };
 
 class FixedFunctionChannelController : public ChannelController {
 Q_OBJECT
 public:
-    FixedFunctionChannelController(QDeclarativeItem* curve, const QList<PlotLine*>& channels);
     enum OperationMode {
         CrossCorrelation,
         FourierTransform
     };
+    FixedFunctionChannelController(QDeclarativeItem* curve, const QList<PlotLine*>& channels);
     virtual void changeChannelMode(QString channel, QString newMode);
 public slots:
     virtual void scheduleUpdate();

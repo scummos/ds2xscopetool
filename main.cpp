@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
                      settingsController, SLOT(dataRangeChangeCompleted()));
     QObject::connect(view.rootObject(), SIGNAL(autoRangeRequested()),
                      settingsController, SIGNAL(autoRangeRequested()));
+    QObject::connect(view.rootContext(), SIGNAL(cleanupRequested()),
+                     settingsController, SIGNAL(cleanupRequested()));
 
     QDeclarativeComponent component(engine, QUrl::fromLocalFile("ChartLine.qml"));
 
@@ -68,6 +70,8 @@ int main(int argc, char *argv[])
     controller2->connectToSettingsController(settingsController);
 
     PlotLine* jsMathLine = qobject_cast<PlotLine*>(component.create());
+    PlotLine* fixedMathLine = qobject_cast<PlotLine*>(component.create());
+
     jsMathLine->setParentItem(rootObj);
     jsMathLine->setChannelNumber(3);
     jsMathLine->data->channelType = Channel::MathChannelType;
@@ -75,17 +79,17 @@ int main(int argc, char *argv[])
     jsMathLine->setProperty("color", "#61E000");
     QDeclarativeItem* textArea = view.rootObject()->findChild<QDeclarativeItem*>("jsChannel");
     QList<PlotLine*> lines;
-    lines << channel1 << channel2;
+    lines << channel1 << channel2 << fixedMathLine;
     JSDefinedChannelController* jsController = new JSDefinedChannelController(jsMathLine, textArea, lines);
     jsController->connectToSettingsController(settingsController);
 
-    PlotLine* fixedMathLine = qobject_cast<PlotLine*>(component.create());
     fixedMathLine->setParentItem(rootObj);
     fixedMathLine->setChannelNumber(4);
     fixedMathLine->data->channelType = Channel::MathChannelType;
     QMetaObject::invokeMethod(fixedMathLine, "setup");
     fixedMathLine->setProperty("color", "#FF4498");
-    FixedFunctionChannelController* fixedController = new FixedFunctionChannelController(fixedMathLine, QList<PlotLine*>() << lines << jsMathLine);
+    FixedFunctionChannelController* fixedController = new FixedFunctionChannelController(fixedMathLine,
+                                                                                         QList<PlotLine*>() << channel1 << channel2 << jsMathLine);
     fixedController->connectToSettingsController(settingsController);
 
     view.setGeometry(100, 100, 800, 480);

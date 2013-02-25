@@ -9,6 +9,7 @@ Rectangle {
     color: "#111111"
 
     signal autoRangeRequested()
+    signal cleanupRequested();
 
     Rectangle {
         // This is not being used yet; should show current channel scale
@@ -175,7 +176,7 @@ Rectangle {
     }
 
     Keys.onPressed: {
-        if ( event.key == Qt.Key_F1 ) {
+        if ( event.key == Qt.Key_F2 ) {
             if ( textEditor.state == "NotVisibleState" ) {
                 textEditor.state = "VisibleState";
             }
@@ -195,6 +196,9 @@ Rectangle {
         }
         if ( event.key == Qt.Key_A ) {
             autoRangeRequested();
+        }
+        if ( event.key == Qt.Key_C ) {
+            cleanupRequested();
         }
         if ( dataRangeManager.state == "InactiveState" ) {
             var operations = Object();
@@ -322,7 +326,7 @@ Rectangle {
                 }
                 ListElement {
                     text: "Ch3: %r"
-                    toggleValues: [ ListElement { value: "Off" }, ListElement { value: "JS Math" } ]
+                    toggleValues: [ ListElement { value: "Off" }, ListElement { value: "JS Math" }, ListElement { value: "JS History" } ]
                     notifyParamName: "channel3_mode";
                 }
                 ListElement {
@@ -330,6 +334,11 @@ Rectangle {
                     toggleValues: [ ListElement { value: "Off" }, ListElement { value: "CrossCorr" }, ListElement { value: "FFT Ch1" },
                                     ListElement { value: "FFT Ch2" }, ListElement { value: "FFT Ch3" } ]
                     notifyParamName: "channel4_mode";
+                }
+                ListElement {
+                    text: "AutoScale"
+                    toggleValues: [ ListElement { value: "On" }, ListElement { value: "Off" } ]
+                    notifyParamName: "autoAutoUpdate";
                 }
             }
             delegate: Rectangle {
@@ -405,8 +414,8 @@ Rectangle {
         Behavior on opacity { NumberAnimation { duration: 120 } }
         z: 10
         color: Qt.rgba(0.2, 0.2, 0.2, 0.8)
-        width: 240
-        height: 100
+        width: 340
+        height: 120
         radius: 0
         opacity: 0
         x: -50
@@ -437,14 +446,18 @@ Rectangle {
                     return eval(code);
                 }
 
+                function doHistoryCalculation(ch1, ch2, ch4, code) {
+                    return eval(code);
+                }
+
                 id: jsChannel
                 objectName: "jsChannel"
                 anchors.leftMargin: 8
                 anchors.topMargin: 8
                 anchors.fill: parent
-                text: "y1+y2"
+                text: "// vars are yi and chi"
                 font.family: "Monospace"
-                font.pointSize: 8
+                font.pointSize: 6
                 color: "#CCCCCC"
                 textFormat: TextEdit.PlainText
                 focus: true

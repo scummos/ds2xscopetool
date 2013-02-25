@@ -17,6 +17,7 @@ signals:
     void dataRangeChangeRequested(QString channel, Channel::TransformationKind kind, Channel::Axis axis, float magnitude);
     void channelModeChanged(QString channel, QString newMode);
     void autoRangeRequested();
+    void cleanupRequested();
 private:
     static QPoint previousMousePosition;
     QList<PlotLine*> connectedClients;

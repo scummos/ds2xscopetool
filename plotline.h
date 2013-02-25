@@ -122,7 +122,7 @@ public:
     int penWidth() const { return m_penWidth; }
 
     void setColor(const QColor &color) {
-        if(m_color == color) return;
+        if ( m_color == color ) return;
         m_color = color;
         emit colorChanged();
         update();

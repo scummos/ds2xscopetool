@@ -8,7 +8,7 @@
 
 ChannelController::ChannelController(QDeclarativeItem* curve)
     : curve(qobject_cast<PlotLine*>(curve))
-    , updateType(SingleShot)
+    , updateType(Freeze)
     , updateInterval(50)
 {
     Q_ASSERT(curve && "must pass a PlotLine object as curve");
@@ -159,7 +159,7 @@ void ScopeChannelController::fillCurveWithFakeData()
 
 void ScopeChannelController::doSingleUpdate()
 {
-    if ( ! curve->enabled ) {
+    if ( ! curve->enabled || updateType == Freeze ) {
         return;
     }
     if ( fakeMode ) {
@@ -185,12 +185,22 @@ JSDefinedChannelController::JSDefinedChannelController(QDeclarativeItem* curve, 
     , inputChannels(inputChannels)
     , textArea(textArea)
 {
+    setUpdateType(Freeze);
     QObject::connect(textArea, SIGNAL(textChanged(const QString&)), this, SLOT(doUpdate(const QString&)));
     foreach ( const PlotLine* chan, inputChannels ) {
-        QObject::connect(chan, SIGNAL(dataChanged()), this, SLOT(doUpdate()));
-        QObject::connect(chan, SIGNAL(dataRangeChanged()), this, SLOT(doUpdate()));
+        QObject::connect(chan, SIGNAL(dataChanged()), this, SLOT(scheduleUpdate()));
+        QObject::connect(chan, SIGNAL(dataRangeChanged()), this, SLOT(scheduleUpdate()));
     }
-    doUpdate(QString::null);
+    QObject::connect(&updateTimer, SIGNAL(timeout()), this, SLOT(doUpdate()));
+    doUpdate();
+}
+
+void JSDefinedChannelController::scheduleUpdate()
+{
+    if ( ! updateTimer.isActive() && ! updateType == Freeze ) {
+        updateTimer.setInterval(updateInterval >= 250 ? updateInterval : updateInterval * 2.5);
+        updateTimer.start();
+    }
 }
 
 void JSDefinedChannelController::doUpdate()
@@ -199,21 +209,54 @@ void JSDefinedChannelController::doUpdate()
     doUpdate(text);
 }
 
+void JSDefinedChannelController::changeChannelMode(QString channel, QString newMode)
+{
+    ChannelController::changeChannelMode(channel, newMode);
+    if ( newMode == "JS Math" ) {
+        operationMode = JSMath;
+    }
+    else if ( newMode == "JS History" ) {
+        operationMode = JSMeasurementHistory;
+        curve->data->data.clear();
+    }
+    doUpdate();
+}
+
 void JSDefinedChannelController::doUpdate(const QString& text)
 {
-    QVariant returnedValue;
-    float y1, y2;
+    if ( ! curve->enabled || updateType == Freeze ) {
+        return;
+    }
     QTime t;
     t.start();
-    for ( int i = 0; i < qMin(inputChannels[0]->data->data.size(), inputChannels[1]->data->data.size()); i++ ) {
-        y1 = inputChannels[0]->data->data[i];
-        y2 = inputChannels[1]->data->data[i];
-        QMetaObject::invokeMethod(textArea, "doCalculation", Q_RETURN_ARG(QVariant, returnedValue),
-                                  Q_ARG(QVariant, y1), Q_ARG(QVariant, y2), Q_ARG(QVariant, text));
-        curve->data->data[i] = returnedValue.toFloat();
+    if ( operationMode == JSMath ) {
+        QVariant returnedValue;
+        float y1, y2;
+        for ( int i = 0; i < qMin(inputChannels[0]->data->data.size(), inputChannels[1]->data->data.size()); i++ ) {
+            y1 = inputChannels[0]->data->data[i];
+            y2 = inputChannels[1]->data->data[i];
+            QMetaObject::invokeMethod(textArea, "doCalculation", Q_RETURN_ARG(QVariant, returnedValue),
+                                      Q_ARG(QVariant, y1), Q_ARG(QVariant, y2), Q_ARG(QVariant, text));
+            curve->data->data[i] = returnedValue.toFloat();
+        }
     }
-//     qDebug() << "JS function evaluation took " << t.elapsed() << "ms";
-    ChannelController::redraw();
+    else if ( operationMode == JSMeasurementHistory ) {
+        QVariant returnedValue;
+        QVector<QVariantList> channels;
+        foreach ( PlotLine* channel, inputChannels ) {
+            QVariantList l;
+            foreach ( float y, channel->data->data.values() ) {
+                l.append(y);
+            }
+            channels << l;
+        }
+        QMetaObject::invokeMethod(textArea, "doHistoryCalculation", Q_RETURN_ARG(QVariant, returnedValue),
+                                  Q_ARG(QVariant, channels[0]), Q_ARG(QVariant, channels[1]),
+                                  Q_ARG(QVariant, channels[2]), Q_ARG(QVariant, text));
+        curve->data->data[curve->data->data.size()] = returnedValue.toFloat();
+    }
+    autoDataRange();
+    redraw();
 }
 
 FixedFunctionChannelController::FixedFunctionChannelController(QDeclarativeItem* curve, const QList<PlotLine*>& channels)

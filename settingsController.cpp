@@ -7,7 +7,7 @@ void SettingsController::settingChanged(QString name, QVariant newValue)
 {
     if ( name == "UpdateType" ) {
         QString v = newValue.toString();
-        emit updateTypeChanged(v == "Freeze" ? ScopeChannelController::SingleShot : ScopeChannelController::Periodically);
+        emit updateTypeChanged(v == "Freeze" ? ScopeChannelController::Freeze : ScopeChannelController::Periodically);
     }
     if ( name == "AcquisitionTime" ) {
         emit updateIntervalChanged(newValue.toInt());
