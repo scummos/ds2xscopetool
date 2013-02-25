@@ -16,7 +16,7 @@ Rectangle {
         },
         State {
             name: "NormalState"
-            PropertyChanges { target: background; color: "#33AAAAAA" }
+            PropertyChanges { target: background; color: "#55AAAAAA" }
             PropertyChanges { target: text; color: "white" }
         }
     ]

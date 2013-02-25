@@ -8,6 +8,46 @@ Rectangle {
     anchors.fill: parent;
     color: "#111111"
 
+    Rectangle {
+        z: 1000
+        height: 25
+        width: 600
+        color: "#00FFFFFF"
+        anchors.bottom: canvas.bottom
+        anchors.margins: 8
+        x: 8
+        Component.onCompleted: {
+            menuButtonList.paramChanged.connect(updatePanel)
+        }
+        function updatePanel(paramName, newValue) {
+            for ( var i = 0; i < icons.children.length; i++ ) {
+                if ( paramName == icons.children[i].buttonFor ) {
+                    icons.children[i].value = newValue
+                }
+            }
+        }
+        Row {
+            id: icons
+            spacing: 10
+            ChannelButton {
+                buttonFor: "channel1_mode"
+                color: "#FFC800"
+            }
+            ChannelButton {
+                buttonFor: "channel2_mode"
+                color: "#1C73FF"
+            }
+            ChannelButton {
+                buttonFor: "channel3_mode"
+                color: "#61E000"
+            }
+            ChannelButton {
+                buttonFor: "channel4_mode"
+                color: "#FF4498"
+            }
+        }
+    }
+
     MouseArea {
         id: dataRangeManager
         objectName: "dataRangeManager"
@@ -131,8 +171,8 @@ Rectangle {
             var channels = Object();
             channels[Qt.Key_1] = "Channel1";
             channels[Qt.Key_2] = "Channel2";
-            channels[Qt.Key_3] = "jsMathLine";
-            channels[Qt.Key_4] = "fixedMathLine";
+            channels[Qt.Key_3] = "Channel3";
+            channels[Qt.Key_4] = "Channel4";
             if ( channels[event.key] != undefined ) {
                 dataRangeManager.channel = channels[event.key];
                 dataRangeManager.state = "SelectAxisState";
@@ -147,9 +187,15 @@ Rectangle {
                 dataRangeManager.state = dataRangeManager.operation;
             }
         }
-        if ( dataRangeManager.state != "InactiveState" ) {
-            if ( event.key == Qt.Key_Escape ) {
+        if ( event.key == Qt.Key_Escape ) {
+            if ( dataRangeManager.state != "InactiveState" ) {
                 dataRangeManager.state = "InactiveState";
+            }
+            if ( menu.state = "VisibleState" ) {
+                menu.state = "NotVisibleState";
+            }
+            if ( textEditor.state == "VisibleState" ) {
+                textEditor.state = "NotVisibleState";
             }
         }
      }
@@ -162,10 +208,25 @@ Rectangle {
         id: menu
         anchors.right: parent.right
         y: 15
+        opacity: 0
         Keys.onDownPressed: menuButtonList.incrementCurrentIndex()
         Keys.onUpPressed: menuButtonList.decrementCurrentIndex()
-        Keys.onLeftPressed: menuButtonList.currentItem.selected -= 1
-        Keys.onRightPressed: menuButtonList.currentItem.selected += 1
+        Keys.onLeftPressed: {
+            if ( menuButtonList.currentItem.selected - 1 < 0 ) {
+                menuButtonList.currentItem.selected = menuButtonList.currentItem.choices - 1;
+            }
+            else {
+                menuButtonList.currentItem.selected -= 1
+            }
+        }
+        Keys.onRightPressed: {
+            if ( menuButtonList.currentItem.selected + 1 >= menuButtonList.currentItem.choices ) {
+                menuButtonList.currentItem.selected = 0
+            }
+            else {
+                menuButtonList.currentItem.selected += 1
+            }
+        }
         states: [
             State {
                 name: "VisibleState"
@@ -196,7 +257,7 @@ Rectangle {
                 id: menuSettings
                 ListElement {
                     text: "Acq: %r"
-                    toggleValues: [ ListElement { value: "Full" }, ListElement { value: "Displayed" } ]
+                    toggleValues: [ ListElement { value: "Displayed" }, ListElement { value: "Full" } ]
                     notifyParamName: "AcquisitionMode"
                 }
                 ListElement {
@@ -211,12 +272,34 @@ Rectangle {
                     toggleValues: [ ListElement { value: "Auto" }, ListElement { value: "Freeze" } ]
                     notifyParamName: "UpdateType"
                 }
+                ListElement {
+                    text: "Ch1: %r"
+                    toggleValues: [ ListElement { value: "Scope Ch1" }, ListElement { value: "Off" }, ListElement { value: "Fake" } ]
+                    notifyParamName: "channel1_mode";
+                }
+                ListElement {
+                    text: "Ch2: %r"
+                    toggleValues: [ ListElement { value: "Scope Ch2" }, ListElement { value: "Off" }, ListElement { value: "Fake" } ]
+                    notifyParamName: "channel2_mode";
+                }
+                ListElement {
+                    text: "Ch3: %r"
+                    toggleValues: [ ListElement { value: "JS Math" }, ListElement { value: "Off" } ]
+                    notifyParamName: "channel3_mode";
+                }
+                ListElement {
+                    text: "Ch4: %r"
+                    toggleValues: [ ListElement { value: "CrossCorr" }, ListElement { value: "FFT Ch1" },
+                                    ListElement { value: "FFT Ch2" }, ListElement { value: "FFT Ch3" }, ListElement { value: "Off" } ]
+                    notifyParamName: "channel4_mode";
+                }
             }
             delegate: Rectangle {
                 id: wrapper
                 state: ListView.isCurrentItem ? "SelectedState" : "NormalState"
                 onStateChanged: button.state = state
                 property int selected: 0
+                property int choices: toggleValues.count
                 ListView {
                     rotation: 180
                     width: 300
@@ -240,16 +323,15 @@ Rectangle {
                         }
                     }
                 }
-                onSelectedChanged: menuButtonList.paramChanged(notifyParamName, toggleValues.get(wrapper.selected).value)
+                onSelectedChanged: {
+                    menuButtonList.paramChanged(notifyParamName, toggleValues.get(wrapper.selected).value)
+                }
+                Component.onCompleted: {
+                    menuButtonList.paramChanged(notifyParamName, toggleValues.get(wrapper.selected).value)
+                }
                 MenuButton {
                     id: button
                     buttonText: {
-                        if ( parent.selected >= toggleValues.count ) {
-                            parent.selected = 0;
-                        }
-                        if ( parent.selected < 0 ) {
-                            parent.selected = toggleValues.count - 1;
-                        }
                         text.replace("%r", toggleValues.get(parent.selected).value);
                     }
                 }
@@ -267,7 +349,7 @@ Rectangle {
         states: [
             State {
                 name: "NotVisibleState"
-                PropertyChanges { target: textEditor; x: -500 }
+                PropertyChanges { target: textEditor; x: -50 }
                 PropertyChanges { target: jsChannel; focus: false }
                 PropertyChanges { target: canvas; focus: true }
             },
@@ -275,18 +357,21 @@ Rectangle {
                 name: "VisibleState"
                 PropertyChanges { target: textEditor; x: 15 }
                 PropertyChanges { target: jsChannel; focus: true }
+                PropertyChanges { target: textEditor; opacity: 1 }
             }
         ]
 
         Component.onCompleted: state = "NotVisibleState";
 
-        Behavior on x { NumberAnimation { duration: 200 } }
+        Behavior on x { NumberAnimation { duration: 120 } }
+        Behavior on opacity { NumberAnimation { duration: 120 } }
         z: 10
         color: Qt.rgba(0.2, 0.2, 0.2, 0.8)
         width: 240
         height: 100
-        radius: 3
-        x: 15
+        radius: 0
+        opacity: 0
+        x: -50
         y: 15
         border.color: "#777777"
         border.width: 1

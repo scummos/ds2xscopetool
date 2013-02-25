@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
     QDeclarativeItem* jsMathLine = qobject_cast<QDeclarativeItem*>(component.create());
     jsMathLine->setParentItem(rootObj);
-    jsMathLine->setProperty("id", "jsMathLine");
+    jsMathLine->setProperty("id", "Channel3");
     qobject_cast<Plotline*>(jsMathLine)->setDataRange(QRectF(0, -1, 1300, 2));
     QMetaObject::invokeMethod(jsMathLine, "setup");
     jsMathLine->setProperty("color", "#61E000");
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
     QDeclarativeItem* fixedMathLine = qobject_cast<QDeclarativeItem*>(component.create());
     fixedMathLine->setParentItem(rootObj);
-    fixedMathLine->setProperty("id", "fixedMathLine");
+    fixedMathLine->setProperty("id", "Channel4");
     qobject_cast<Plotline*>(fixedMathLine)->setDataRange(QRectF(0, -0.4, 1000, 2.0));
     QMetaObject::invokeMethod(fixedMathLine, "setup");
     fixedMathLine->setProperty("color", "#FF4498");
