@@ -12,7 +12,7 @@ using namespace std;
 
 struct Channel : public QSharedData {
     enum Type {
-        InvalidChannelType,
+        MiscChannelType,
         ScopeChannelType,
         LogicChannelType,
         MathChannelType
@@ -34,7 +34,7 @@ struct Channel : public QSharedData {
      , data(other.data) { };
 
     Channel()
-     : channelType(InvalidChannelType) { };
+     : channelType(MiscChannelType) { };
 
     ~Channel() { };
 
@@ -60,11 +60,14 @@ public:
     bool enabled;
 
 public:
-    Plotline(QDeclarativeItem *parent = 0) :
-        QDeclarativeItem(parent),
-        m_color(Qt::black), m_penWidth(1)
+    Plotline(QDeclarativeItem *parent = 0)
+        : QDeclarativeItem(parent)
+        , m_color(Qt::black)
+        , m_penWidth(1)
+        , dataRange(QRectF(-0.5, 0, 1000, 1.0))
+        , channelNumber(0)
     {
-        // Important, otherwise the paint method is never cdelayalled
+        // Important, otherwise the paint method is never called
         setFlag(QGraphicsItem::ItemHasNoContents, false);
 
         data = new Channel();
@@ -96,6 +99,19 @@ public:
             if ( dataRange.left() < x && dataRange.right() > x ) {
                 QPointF start(transformXValue(x), transformYValue(points[x]));
                 QPointF end(transformXValue(data->indexToFloat(key+1)), transformYValue(points[x+1]));
+
+                std::function<float(float)> clipTop = [&](float yvalue) -> float {
+                    return qMin(static_cast<float>(yvalue), transformYValue(dataRange.top())-1);
+                };
+                std::function<float(float)> clipBottom = [&](float yvalue) -> float {
+                    return qMax(static_cast<float>(yvalue), transformYValue(dataRange.bottom()));
+                };
+
+                // don't clip, but instead draw lines at the corners
+                start.setY(clipTop(start.y()));
+                end.setY(clipTop(end.y()));
+                start.setY(clipBottom(start.y()));
+                end.setY(clipBottom(end.y()));
                 painter->drawLine(start, end);
             }
         }
@@ -129,6 +145,15 @@ public:
         emit dataChanged();
     }
 
+    int getChannelNumber() const {
+        return channelNumber;
+    }
+
+    void setChannelNumber(int channelNumber_) {
+        channelNumber = channelNumber_;
+        setProperty("id", "Channel" + QString::number(channelNumber));
+    }
+
 signals:
     void colorChanged();
     void penWidthChanged();
@@ -144,6 +169,9 @@ protected:
     QColor m_color;
     int m_penWidth;
     QRectF dataRange;
+
+private:
+    int channelNumber;
 };
 
 QML_DECLARE_TYPE(Plotline)

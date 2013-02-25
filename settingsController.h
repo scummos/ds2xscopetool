@@ -16,8 +16,10 @@ signals:
     void acquisitionTypeChanged(ScopeChannelController::AcquisitionType newType);
     void dataRangeChangeRequested(QString channel, Channel::TransformationKind kind, Channel::Axis axis, float magnitude);
     void channelModeChanged(QString channel, QString newMode);
+    void autoRangeRequested();
 private:
     static QPoint previousMousePosition;
+    QList<Plotline*> connectedClients;
 };
 
 #endif

@@ -21,10 +21,12 @@ public:
     ChannelController(QDeclarativeItem* curve);
     virtual void connectToSettingsController(const SettingsController* controller);
     void resetTimer();
+
 public slots:
     void setUpdateType(ChannelController::UpdateType type);
     void setUpdateInterval(int msecs);
     void changeDataRange(QString channel, Channel::TransformationKind kind, Channel::Axis axis, float amount);
+    void autoDataRange();
     virtual void changeChannelMode(QString channel, QString newMode);
 
     // Make sure to call this default implementation from derived classes,

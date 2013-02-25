@@ -8,6 +8,39 @@ Rectangle {
     anchors.fill: parent;
     color: "#111111"
 
+    signal autoRangeRequested()
+
+    Rectangle {
+        // This is not being used yet; should show current channel scale
+        // later, while resizing
+        visible: false
+        id: smallNotication
+        property string notification
+        height: 22
+        width: 200
+        opacity: 0
+        color: "#77000000"
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: 8
+        z: 1000
+        states: [
+            State {
+                name: "VisibleState"
+                PropertyChanges { target: smallNotication; opacity: 1.0 }
+            },
+            State {
+                name: "NotVisibleState"
+            }
+        ]
+        Text {
+            text: parent.notification
+            font.family: "monospace"
+            font.pointSize: 12
+            color: "white"
+        }
+        Component.onCompleted: state = "VisibleState"
+    }
+
     Rectangle {
         z: 1000
         height: 25
@@ -55,11 +88,11 @@ Rectangle {
     MouseArea {
         id: dataRangeManager
         objectName: "dataRangeManager"
-        signal dataRangeChangeRequested(string channel, string axis, string kind, int newX, int newY);
-        signal dataRangeChangeCompleted();
-        property string operation: "undefined";
-        property string channel: "undefined";
-        property string axis: "undefined";
+        signal dataRangeChangeRequested(string channel, string axis, string kind, int newX, int newY)
+        signal dataRangeChangeCompleted()
+        property string operation: "undefined"
+        property string channel: "undefined"
+        property string axis: "undefined"
         anchors.fill: parent
         hoverEnabled: false
         onPositionChanged: dataRangeChangeRequested(channel, axis, operation, mouse.x, mouse.y);
@@ -89,8 +122,6 @@ Rectangle {
             State {
                 name: "ScaleChannelState"
                 PropertyChanges { target: dataRangeManager; hoverEnabled: true }
-                PropertyChanges { target: notification; notificationText: "Scale channel" }
-                PropertyChanges { target: notification; state: "VisibleState" }
                 PropertyChanges { target: dataRangeManager; operation: "scale" }
             }
         ]
@@ -161,6 +192,9 @@ Rectangle {
                 menu.state = "NotVisibleState";
             }
             event.accepted = true;
+        }
+        if ( event.key == Qt.Key_A ) {
+            autoRangeRequested();
         }
         if ( dataRangeManager.state == "InactiveState" ) {
             var operations = Object();
@@ -288,13 +322,13 @@ Rectangle {
                 }
                 ListElement {
                     text: "Ch3: %r"
-                    toggleValues: [ ListElement { value: "JS Math" }, ListElement { value: "Off" } ]
+                    toggleValues: [ ListElement { value: "Off" }, ListElement { value: "JS Math" } ]
                     notifyParamName: "channel3_mode";
                 }
                 ListElement {
                     text: "Ch4: %r"
-                    toggleValues: [ ListElement { value: "CrossCorr" }, ListElement { value: "FFT Ch1" },
-                                    ListElement { value: "FFT Ch2" }, ListElement { value: "FFT Ch3" }, ListElement { value: "Off" } ]
+                    toggleValues: [ ListElement { value: "Off" }, ListElement { value: "CrossCorr" }, ListElement { value: "FFT Ch1" },
+                                    ListElement { value: "FFT Ch2" }, ListElement { value: "FFT Ch3" } ]
                     notifyParamName: "channel4_mode";
                 }
             }
@@ -308,7 +342,7 @@ Rectangle {
                     rotation: 180
                     width: 300
                     x: -300
-                    opacity: wrapper.ListView.isCurrentItem ? 0.8 : 0.2
+                    opacity: wrapper.ListView.isCurrentItem ? 0.9 : 0.4
                     Behavior on opacity { NumberAnimation { duration: 100 } }
                     z: 30
                     model: toggleValues
@@ -408,7 +442,7 @@ Rectangle {
                 anchors.leftMargin: 8
                 anchors.topMargin: 8
                 anchors.fill: parent
-                text: "y1+y2+5000"
+                text: "y1+y2"
                 font.family: "Monospace"
                 font.pointSize: 8
                 color: "#CCCCCC"

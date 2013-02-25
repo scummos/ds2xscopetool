@@ -50,6 +50,7 @@ void ChannelController::changeChannelMode(QString channel, QString newMode)
             resetTimer();
         }
     }
+    redraw();
 }
 
 void ChannelController::connectToSettingsController(const SettingsController* controller)
@@ -62,11 +63,33 @@ void ChannelController::connectToSettingsController(const SettingsController* co
                      this, SLOT(changeDataRange(QString, Channel::TransformationKind, Channel::Axis, float)));
     QObject::connect(controller, SIGNAL(channelModeChanged(QString,QString)),
                      this, SLOT(changeChannelMode(QString,QString)));
+    QObject::connect(controller, SIGNAL(autoRangeRequested()),
+                     this, SLOT(autoDataRange()));
+}
+
+void ChannelController::autoDataRange()
+{
+    if ( curve->data->data.isEmpty() ) {
+        // nothing to scale
+        return;
+    }
+    else {
+        // scale the curve to fit on 1/8 of the screen vertically
+        // and on the whole screen horizontally
+        const float width = curve->data->data.count() - 1;
+        float ymin = curve->data->data[0], ymax = curve->data->data[0];
+        foreach ( const float value, curve->data->data.values() ) {
+            if ( value < ymin ) ymin = value;
+            if ( value > ymax ) ymax = value;
+        }
+        const float height = ymax-ymin;
+        const QRectF newRange = QRectF(0, ymin - (8-1.8*curve->getChannelNumber())*height, width, height * 8);
+        curve->setDataRange(newRange);
+    }
 }
 
 void ChannelController::changeDataRange(QString channel, Channel::TransformationKind kind, Channel::Axis axis, float amount)
 {
-    qDebug() << curve->property("id") << channel;
     if ( curve->property("id") == channel ) {
         QRectF range = curve->getDataRange();
         if ( kind == Channel::Scale ) {
@@ -128,7 +151,7 @@ void ScopeChannelController::changeChannelMode(QString channel, QString newMode)
 void ScopeChannelController::fillCurveWithFakeData()
 {
     for ( int i = 0; i < 1400; i++ ) {
-        curve->data->data[i] = cos(i/30.0) * curve->getDataRange().height() / 8;
+        curve->data->data[i] = cos(i/30.0) * curve->getDataRange().height() / 8.0 + curve->getDataRange().top() + curve->getDataRange().height() / 2.0;
     }
     ChannelController::redraw();
 }
