@@ -36,6 +36,40 @@ void ChannelController::connectToSettingsController(const SettingsController* co
                      this, SLOT(setUpdateType(ChannelController::UpdateType)));
     QObject::connect(controller, SIGNAL(updateIntervalChanged(int)),
                      this, SLOT(setUpdateInterval(int)));
+    QObject::connect(controller, SIGNAL(dataRangeChangeRequested(QString, Channel::TransformationKind, Channel::Axis, float)),
+                     this, SLOT(changeDataRange(QString, Channel::TransformationKind, Channel::Axis, float)));
+}
+
+void ChannelController::changeDataRange(QString channel, Channel::TransformationKind kind, Channel::Axis axis, float amount)
+{
+    if ( curve->property("id") == channel ) {
+        QRectF range = curve->getDataRange();
+        if ( kind == Channel::Scale ) {
+            if ( axis == Channel::HorizontalAxis ) {
+                float change = range.width() * amount / 100;
+                range.setLeft(range.left() - change / 2);
+                range.setRight(range.right() + change / 2);
+            }
+            else {
+                float change = range.height() * amount / 100;
+                range.setTop(range.top() - change*range.top() / range.height());
+                range.setBottom(range.bottom() - change*range.bottom() / range.height());
+            }
+        }
+        else {
+            if ( axis == Channel::HorizontalAxis ) {
+                float adjusted = amount*range.width() / 600;
+                range.setLeft(range.left() - adjusted);
+                range.setRight(range.right() - adjusted);
+            }
+            else {
+                float adjusted = amount*range.height() / 600;
+                range.setTop(range.top() + adjusted);
+                range.setBottom(range.bottom() + adjusted);
+            }
+        }
+        curve->setDataRange(range);
+    }
 }
 
 void ChannelController::redraw()
@@ -110,8 +144,9 @@ FixedFunctionChannelController::FixedFunctionChannelController(QDeclarativeItem*
     : ChannelController(curve)
     , channel1(channel1)
     , channel2(channel2)
+    , operationMode(CrossCorrelation)
 {
-
+    connect(channel1, SIGNAL(dataChanged()), this, SLOT(doUpdate()));
 }
 
 void FixedFunctionChannelController::setOperationMode(FixedFunctionChannelController::OperationMode newMode)
@@ -121,7 +156,9 @@ void FixedFunctionChannelController::setOperationMode(FixedFunctionChannelContro
 
 void FixedFunctionChannelController::doUpdate()
 {
-    curve->data->data = Utils::crossCorrelation(channel1->data->data, channel2->data->data);
+    if ( operationMode == CrossCorrelation ) {
+        curve->data->data = Utils::crossCorrelation(channel1->data->data, channel2->data->data);
+    }
 }
 
 

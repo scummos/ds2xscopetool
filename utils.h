@@ -21,7 +21,7 @@ public:
             // so per *ten divisions*. The scale returned by the scope
             // is per *one division*. (25.6 = 2^8 / 10.0)
             result[index] = (byte - yref)/25.6 * scale - offset;
-            qDebug() << (int) byte << yref << scale << offset << (byte-yref)*scale/10 << result[index];
+//             qDebug() << (int) byte << yref << scale << offset << (byte-yref)*scale/10 << result[index];
             index += 1;
         }
         return result;
@@ -29,27 +29,31 @@ public:
     static QMap<int, float> crossCorrelation(QMap<int, float> ch1, QMap<int, float> ch2) {
         Q_ASSERT(ch1.count() == ch2.count() && "channels must have the same amount of sample points");
         Q_ASSERT(ch1.count() % 2 == 0 && "number of points in channel must be even");
-        if ( ch1.count() == 0 ) {
+        if ( ch1.count() == 0 || ch1.count() != ch2.count() ) {
             return QMap<int, float>();
         }
         const int mid = ch1.count() / 2;
         const QList<float> ch1_values = ch1.values();
         const QList<float> ch2_values = ch2.values();
         const unsigned int sizeHint = ch1.count();
-        cvec ch1_fft(sizeHint), ch2_fft(sizeHint);
+        cvec* ch1_fft = new cvec(sizeHint);
+        cvec* ch2_fft = new cvec(sizeHint);
         {
-            vec ch1_vec(sizeHint), ch2_vec(sizeHint);
+            vec* ch1_vec = new vec(sizeHint);
+            vec* ch2_vec = new vec(sizeHint);
             for ( int i = 0; i < ch1_values.size(); i++ ) {
-                ch1_vec[i] = ch1_values[i];
-                ch2_vec[i] = ch2_values[i];
+                (*ch1_vec)[i] = ch1_values[i];
+                (*ch2_vec)[i] = ch2_values[i];
             }
-            ch1_fft = fft_real(ch1_vec);
-            ch2_fft = fft_real(ch2_vec);
+            *ch1_fft = fft_real(*ch1_vec);
+            *ch2_fft = fft_real(*ch2_vec);
+            delete ch1_vec;
+            delete ch2_vec;
         }
 
         // calculate cross-correlation
-        elem_mult_inplace(conj(ch1_fft), ch2_fft);
-        cvec& crossCorrelation = ch2_fft;
+        elem_mult_inplace(conj(*ch1_fft), *ch2_fft);
+        cvec& crossCorrelation = *ch2_fft;
 
         // enhance resolution
         std::complex<double> midValue = crossCorrelation.get(mid);
@@ -65,6 +69,8 @@ public:
         for ( int i = 0; i < result.size(); i++ ) {
             resultMap[i] = result.get(i);
         }
+        delete ch1_fft;
+        delete ch2_fft;
         return resultMap;
     };
 };

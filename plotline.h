@@ -17,6 +17,15 @@ struct Channel : public QSharedData {
         LogicChannelType,
         MathChannelType
     };
+    enum Axis {
+        HorizontalAxis,
+        VerticalAxis
+    };
+    enum TransformationKind {
+        Scale,
+        Movement,
+        Rotation // ;)
+    };
     typedef QPair<int, float> Point;
 
     Channel(const Channel& other )
@@ -37,7 +46,6 @@ struct Channel : public QSharedData {
 
     Type channelType;
     QMap<int, float> data;
-    QRectF dataRange;
 };
 
 class Plotline : public QDeclarativeItem
@@ -83,9 +91,8 @@ public:
             const float x = data->indexToFloat(key);
             if ( dataRange.left() < x && dataRange.right() > x ) {
                 QPointF start(transformXValue(x), transformYValue(points[x]));
-                QPointF end(transformXValue(data->indexToFloat(key+1))-dataRange.left(), transformYValue(points[x+1]));
+                QPointF end(transformXValue(data->indexToFloat(key+1)), transformYValue(points[x+1]));
                 painter->drawLine(start, end);
-//                 qDebug() << start << end;
             }
         }
     }

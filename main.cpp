@@ -39,24 +39,30 @@ int main(int argc, char *argv[])
     SettingsController* settingsController = new SettingsController();
     QObject::connect(view.rootObject()->findChild<QObject*>("menuButtonList"), SIGNAL(paramChanged(QString, QVariant)),
                      settingsController, SLOT(settingChanged(QString, QVariant)));
+    QObject* dataRangeManager = view.rootObject()->findChild<QObject*>("dataRangeManager");
+    QObject::connect(dataRangeManager, SIGNAL(dataRangeChangeRequested(QString, QString, QString, int, int)),
+                     settingsController, SLOT(dataRangeChangeRequested(QString, QString, QString, int, int)));
+    QObject::connect(dataRangeManager, SIGNAL(dataRangeChangeCompleted()),
+                     settingsController, SLOT(dataRangeChangeCompleted()));
 
     QDeclarativeComponent component(engine, QUrl::fromLocalFile("ChartLine.qml"));
 
-    const QRectF defaultDataRange = QRectF(0, -3, 1000, 6);
 
     QDeclarativeItem* channel1 = qobject_cast<QDeclarativeItem*>(component.create());
+    channel1->setProperty("id", "Channel1");
     channel1->setParentItem(rootObj);
-    qobject_cast<Plotline*>(channel1)->setDataRange(defaultDataRange);
+    qobject_cast<Plotline*>(channel1)->setDataRange(QRectF(0, -0.2, 1300, 0.4));
     QMetaObject::invokeMethod(channel1, "setup");
     channel1->setProperty("color", "#FFC800");
     ScopeChannelController* controller = new ScopeChannelController(channel1, worker);
-    controller->channel = "CHAN2";
+    controller->channel = "CHAN1";
     controller->setUpdateType(ChannelController::Periodically);
     controller->connectToSettingsController(settingsController);
 
     QDeclarativeItem* channel2 = qobject_cast<QDeclarativeItem*>(component.create());
     channel2->setParentItem(rootObj);
-    qobject_cast<Plotline*>(channel2)->setDataRange(defaultDataRange);
+    channel2->setProperty("id", "Channel2");
+    qobject_cast<Plotline*>(channel2)->setDataRange(QRectF(0, -0.2, 1300, 0.4));
     QMetaObject::invokeMethod(channel2, "setup");
     channel2->setProperty("color", "#1C73FF");
     ScopeChannelController* controller2 = new ScopeChannelController(channel2, worker);
@@ -66,7 +72,8 @@ int main(int argc, char *argv[])
 
     QDeclarativeItem* jsMathLine = qobject_cast<QDeclarativeItem*>(component.create());
     jsMathLine->setParentItem(rootObj);
-    qobject_cast<Plotline*>(jsMathLine)->setDataRange(defaultDataRange);
+    jsMathLine->setProperty("id", "jsMathLine");
+    qobject_cast<Plotline*>(jsMathLine)->setDataRange(QRectF(0, -1, 1300, 2));
     QMetaObject::invokeMethod(jsMathLine, "setup");
     jsMathLine->setProperty("color", "#61E000");
     QDeclarativeItem* textArea = view.rootObject()->findChild<QDeclarativeItem*>("jsChannel");
@@ -76,9 +83,10 @@ int main(int argc, char *argv[])
 
     QDeclarativeItem* fixedMathLine = qobject_cast<QDeclarativeItem*>(component.create());
     fixedMathLine->setParentItem(rootObj);
-    qobject_cast<Plotline*>(fixedMathLine)->setDataRange(defaultDataRange);
+    fixedMathLine->setProperty("id", "fixedMathLine");
+    qobject_cast<Plotline*>(fixedMathLine)->setDataRange(QRectF(0, -0.4, 1000, 2.0));
     QMetaObject::invokeMethod(fixedMathLine, "setup");
-    fixedMathLine->setProperty("color", "#FFD900");
+    fixedMathLine->setProperty("color", "#FF4498");
     new FixedFunctionChannelController(fixedMathLine, lines[0], lines[1]);
 
     view.setGeometry(100, 100, 800, 480);

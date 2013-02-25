@@ -8,8 +8,99 @@ Rectangle {
     anchors.fill: parent;
     color: "#111111"
 
+    MouseArea {
+        id: dataRangeManager
+        objectName: "dataRangeManager"
+        signal dataRangeChangeRequested(string channel, string axis, string kind, int newX, int newY);
+        signal dataRangeChangeCompleted();
+        property string operation: "undefined";
+        property string channel: "undefined";
+        property string axis: "undefined";
+        anchors.fill: parent
+        hoverEnabled: false
+        onPositionChanged: dataRangeChangeRequested(channel, axis, operation, mouse.x, mouse.y);
+        onClicked: { state = "InactiveState"; dataRangeChangeCompleted(); }
+        states: [
+            State {
+                name: "InactiveState"
+                PropertyChanges { target: dataRangeManager; hoverEnabled: false }
+                PropertyChanges { target: notification; state: "InvisibleState" }
+            },
+            State {
+                name: "SelectChannelState";
+                PropertyChanges { target: notification; notificationText: "Select channel" }
+                PropertyChanges { target: notification; state: "VisibleState" }
+            },
+            State {
+                name: "SelectAxisState";
+                PropertyChanges { target: notification; notificationText: "Select axis" }
+                PropertyChanges { target: notification; state: "VisibleState" }
+            },
+            // TODO could merge those two
+            State {
+                name: "MoveChannelState"
+                PropertyChanges { target: dataRangeManager; hoverEnabled: true }
+                PropertyChanges { target: dataRangeManager; operation: "move" }
+            },
+            State {
+                name: "ScaleChannelState"
+                PropertyChanges { target: dataRangeManager; hoverEnabled: true }
+                PropertyChanges { target: notification; notificationText: "Scale channel" }
+                PropertyChanges { target: notification; state: "VisibleState" }
+                PropertyChanges { target: dataRangeManager; operation: "scale" }
+            }
+        ]
+        Component.onCompleted: state = "InactiveState"
+    }
+
+    Rectangle {
+        id: notification
+        property string notificationText: "";
+        color: "#22FFFFFF";
+        z: 1000
+        anchors.centerIn: parent
+        clip: true
+        opacity: 0.0
+        width: 130
+        height: 20
+        Behavior on opacity { NumberAnimation { duration: 80 } }
+        Behavior on width { NumberAnimation { duration: 150 } }
+        Behavior on height { NumberAnimation { duration: 150 } }
+        onNotificationTextChanged: notificationText.text = notification.notificationText
+
+        Text {
+            id: notificationText
+            Behavior on opacity {
+                NumberAnimation { duration: 150 }
+            }
+            opacity: parent.opacity
+            anchors.fill: parent
+            color: "#CCCCCC"
+            font.family: "monospace"
+            font.pointSize: 11
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        states: [
+            State {
+                name: "InvisbleState"
+            },
+            State {
+                name: "VisibleState"
+                PropertyChanges { target: notificationText; restoreEntryValues: false; explicit: true;
+                                  text: notification.notificationText }
+                PropertyChanges { target: notification; opacity: 1.0 }
+                PropertyChanges { target: notification; width: 300 }
+                PropertyChanges { target: notification; height: 40 }
+            }
+        ]
+
+        Component.onCompleted: state = "InvisibleState"
+    }
+
     Keys.onPressed: {
-        if (event.key == Qt.Key_F1) {
+        if ( event.key == Qt.Key_F1 ) {
             if ( textEditor.state == "NotVisibleState" ) {
                 textEditor.state = "VisibleState";
             }
@@ -18,7 +109,7 @@ Rectangle {
             }
             event.accepted = true;
         }
-        if (event.key == Qt.Key_M) {
+        if ( event.key == Qt.Key_M ) {
             if ( menu.state == "NotVisibleState" ) {
                 menu.state = "VisibleState";
             }
@@ -26,6 +117,40 @@ Rectangle {
                 menu.state = "NotVisibleState";
             }
             event.accepted = true;
+        }
+        if ( dataRangeManager.state == "InactiveState" ) {
+            var operations = Object();
+            operations[Qt.Key_G] = "MoveChannelState";
+            operations[Qt.Key_S] = "ScaleChannelState";
+            if ( operations[event.key] != undefined ) {
+                dataRangeManager.operation = operations[event.key];
+                dataRangeManager.state = "SelectChannelState";
+            }
+        }
+        else if ( dataRangeManager.state == "SelectChannelState" ) {
+            var channels = Object();
+            channels[Qt.Key_1] = "Channel1";
+            channels[Qt.Key_2] = "Channel2";
+            channels[Qt.Key_3] = "jsMathLine";
+            channels[Qt.Key_4] = "fixedMathLine";
+            if ( channels[event.key] != undefined ) {
+                dataRangeManager.channel = channels[event.key];
+                dataRangeManager.state = "SelectAxisState";
+            }
+        }
+        else if ( dataRangeManager.state == "SelectAxisState" ) {
+            var axes = Object();
+            axes[Qt.Key_X] = "x";
+            axes[Qt.Key_Y] = "y";
+            if ( axes[event.key] != undefined ) {
+                dataRangeManager.axis = axes[event.key];
+                dataRangeManager.state = dataRangeManager.operation;
+            }
+        }
+        if ( dataRangeManager.state != "InactiveState" ) {
+            if ( event.key == Qt.Key_Escape ) {
+                dataRangeManager.state = "InactiveState";
+            }
         }
      }
 
@@ -194,7 +319,7 @@ Rectangle {
                 anchors.leftMargin: 8
                 anchors.topMargin: 8
                 anchors.fill: parent
-                text: "y1+y2"
+                text: "y1+y2+5000"
                 font.family: "Monospace"
                 font.pointSize: 8
                 color: "#CCCCCC"

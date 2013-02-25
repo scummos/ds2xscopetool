@@ -22,6 +22,7 @@ public:
 public slots:
     void setUpdateType(ChannelController::UpdateType type);
     void setUpdateInterval(int msecs);
+    void changeDataRange(QString channel, Channel::TransformationKind kind, Channel::Axis axis, float amount);
 
     // Make sure to call this default implementation from derived classes,
     // after the code of the derived class has run
