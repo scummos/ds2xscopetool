@@ -1,7 +1,7 @@
 #include "channelController.h"
 #include "utils.h"
 #include "settingsController.h"
-#include "deviceCommunicationThread.h"
+#include "deviceCommunicationWorker.h"
 
 #include <QDateTime>
 

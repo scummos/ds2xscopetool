@@ -1,4 +1,4 @@
-#include "deviceCommunicationThread.h"
+#include "deviceCommunicationWorker.h"
 #include <QDebug>
 #include "unistd.h"
 
