@@ -6,7 +6,7 @@
 #include "unistd.h"
 
 #include "plotline.h"
-#include "deviceCommunicationThread.h"
+#include "deviceCommunicationWorker.h"
 #include "channelController.h"
 #include "settingsController.h"
 #include "utils.h"
