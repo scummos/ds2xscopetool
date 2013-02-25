@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "tmcdevice.h"
+#include "channelController.h"
 
 struct CommunicationReply {
     enum Status {
@@ -68,15 +69,11 @@ struct WriteCommandCommunicationRequest : public CommunicationRequest {
 struct ReadChannelDataCommunicationRequest : public CommunicationRequest {
     ReadChannelDataCommunicationRequest(QObject* notifyReady, QString notifyMethod, long unsigned int requestIdentifier = 0)
      : CommunicationRequest(notifyReady, notifyMethod, requestIdentifier)
-     , readMode(Displayed) { };
-    enum Mode {
-        Displayed,
-        Full
-    };
+     , readMode(ScopeChannelController::Displayed) { };
     QString channel;
-    Mode readMode;
+    ScopeChannelController::AcquisitionType readMode;
     virtual CommunicationReply* execute(TMCDevice* device) {
-        Q_ASSERT(Mode == Displayed); // FIXME
+        Q_ASSERT(readMode == ScopeChannelController::Displayed); // FIXME
         Q_ASSERT(channel != QString::null);
         device->write(":wav:source " + channel.toAscii() + "\n");
         device->write(":wav:mode norm\n");

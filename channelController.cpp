@@ -1,8 +1,9 @@
 #include "channelController.h"
 #include "utils.h"
 #include "settingsController.h"
+#include "deviceCommunicationThread.h"
 
-#include <qdatetime.h>
+#include <QDateTime>
 
 ChannelController::ChannelController(QDeclarativeItem* curve)
     : curve(qobject_cast<Plotline*>(curve))

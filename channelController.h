@@ -4,10 +4,11 @@
 #include <QDeclarativeItem>
 #include <QTimer>
 
-#include "deviceCommunicationThread.h"
 #include "plotline.h"
 
 class SettingsController;
+class CommunicationReply;
+class DeviceCommunicationWorker;
 
 class ChannelController : public QObject {
 Q_OBJECT

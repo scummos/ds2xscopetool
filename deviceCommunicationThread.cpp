@@ -2,7 +2,7 @@
 #include <QDebug>
 #include "unistd.h"
 
-DeviceCommunicationWorker::DeviceCommunicationWorker(QObject* parent): device(0)
+DeviceCommunicationWorker::DeviceCommunicationWorker(QObject* parent): QObject(parent), device(0)
 {
 
 }
