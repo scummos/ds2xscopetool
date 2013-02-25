@@ -15,7 +15,7 @@ Rectangle {
         color: "#00FFFFFF"
         anchors.bottom: canvas.bottom
         anchors.margins: 8
-        x: 8
+        x: 20
         Component.onCompleted: {
             menuButtonList.paramChanged.connect(updatePanel)
         }
@@ -32,18 +32,22 @@ Rectangle {
             ChannelButton {
                 buttonFor: "channel1_mode"
                 color: "#FFC800"
+                displayName: "1"
             }
             ChannelButton {
                 buttonFor: "channel2_mode"
                 color: "#1C73FF"
+                displayName: "2"
             }
             ChannelButton {
                 buttonFor: "channel3_mode"
                 color: "#61E000"
+                displayName: "3"
             }
             ChannelButton {
                 buttonFor: "channel4_mode"
                 color: "#FF4498"
+                displayName: "4"
             }
         }
     }

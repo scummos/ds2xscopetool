@@ -13,6 +13,11 @@ void SettingsController::settingChanged(QString name, QVariant newValue)
     if ( name == "AcquisitionTime" ) {
         emit updateIntervalChanged(newValue.toInt());
     }
+    if ( name.endsWith("_mode") ) {
+        QString channel = name.remove("_mode");
+        channel[0] = channel[0].toUpper();
+        emit channelModeChanged(channel, newValue.toString());
+    }
 }
 
 void SettingsController::dataRangeChangeCompleted()

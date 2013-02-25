@@ -79,7 +79,8 @@ int main(int argc, char *argv[])
     QDeclarativeItem* textArea = view.rootObject()->findChild<QDeclarativeItem*>("jsChannel");
     QList<Plotline*> lines;
     lines << qobject_cast<Plotline*>(channel1) << qobject_cast<Plotline*>(channel2);
-    new JSDefinedChannelController(jsMathLine, textArea, lines);
+    JSDefinedChannelController* jsController = new JSDefinedChannelController(jsMathLine, textArea, lines);
+    jsController->connectToSettingsController(settingsController);
 
     QDeclarativeItem* fixedMathLine = qobject_cast<QDeclarativeItem*>(component.create());
     fixedMathLine->setParentItem(rootObj);
@@ -87,7 +88,8 @@ int main(int argc, char *argv[])
     qobject_cast<Plotline*>(fixedMathLine)->setDataRange(QRectF(0, -0.4, 1000, 2.0));
     QMetaObject::invokeMethod(fixedMathLine, "setup");
     fixedMathLine->setProperty("color", "#FF4498");
-    new FixedFunctionChannelController(fixedMathLine, lines[0], lines[1]);
+    FixedFunctionChannelController* fixedController = new FixedFunctionChannelController(fixedMathLine, lines[0], lines[1]);
+    fixedController->connectToSettingsController(settingsController);
 
     view.setGeometry(100, 100, 800, 480);
     view.show();

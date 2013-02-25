@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "settingsController.h"
 #include "deviceCommunicationWorker.h"
+#include "plotline.h"
 
 #include <QDateTime>
 
@@ -27,8 +28,27 @@ void ChannelController::setUpdateInterval(int msecs)
 void ChannelController::setUpdateType(ChannelController::UpdateType type)
 {
     updateType = type;
+    resetTimer();
+}
+
+void ChannelController::resetTimer()
+{
     if ( updateType == Periodically ) {
         updateTimer.start();
+    }
+}
+
+void ChannelController::changeChannelMode(QString channel, QString newMode)
+{
+    if ( curve->property("id") == channel ) {
+        if ( newMode.toLower() == "off" ) {
+            qDebug() << "disabling channel" << channel;
+            curve->enabled = false;
+        }
+        else {
+            curve->enabled = true;
+            resetTimer();
+        }
     }
 }
 
@@ -40,10 +60,13 @@ void ChannelController::connectToSettingsController(const SettingsController* co
                      this, SLOT(setUpdateInterval(int)));
     QObject::connect(controller, SIGNAL(dataRangeChangeRequested(QString, Channel::TransformationKind, Channel::Axis, float)),
                      this, SLOT(changeDataRange(QString, Channel::TransformationKind, Channel::Axis, float)));
+    QObject::connect(controller, SIGNAL(channelModeChanged(QString,QString)),
+                     this, SLOT(changeChannelMode(QString,QString)));
 }
 
 void ChannelController::changeDataRange(QString channel, Channel::TransformationKind kind, Channel::Axis axis, float amount)
 {
+    qDebug() << curve->property("id") << channel;
     if ( curve->property("id") == channel ) {
         QRectF range = curve->getDataRange();
         if ( kind == Channel::Scale ) {
@@ -88,8 +111,37 @@ ScopeChannelController::ScopeChannelController(QDeclarativeItem* curve, DeviceCo
     QObject::connect(&updateTimer, SIGNAL(timeout()), this, SLOT(doSingleUpdate()));
 }
 
+void ScopeChannelController::changeChannelMode(QString channel, QString newMode)
+{
+    ChannelController::changeChannelMode(channel, newMode);
+    if ( curve->property("id") == channel ) {
+        if ( newMode == "Fake" ) {
+            fakeMode = true;
+        }
+        else {
+            fakeMode = false;
+            resetTimer();
+        }
+    }
+}
+
+void ScopeChannelController::fillCurveWithFakeData()
+{
+    for ( int i = 0; i < 1400; i++ ) {
+        curve->data->data[i] = cos(i/30.0) * curve->getDataRange().height() / 8;
+    }
+    ChannelController::redraw();
+}
+
 void ScopeChannelController::doSingleUpdate()
 {
+    if ( ! curve->enabled ) {
+        return;
+    }
+    if ( fakeMode ) {
+        fillCurveWithFakeData();
+        return;
+    }
     ReadChannelDataCommunicationRequest* req = new ReadChannelDataCommunicationRequest(this, "updateReady");
     req->channel = channel;
     worker->enqueue(req);
@@ -101,9 +153,7 @@ void ScopeChannelController::updateReady(CommunicationReply* reply)
     curve->data->data = Utils::parseScopeChannelReply(reply->reply, scopeReply->yref, scopeReply->scale, scopeReply->offset);
     delete reply;
     ChannelController::redraw();
-    if ( updateType == Periodically ) {
-        updateTimer.start();
-    }
+    resetTimer();
 }
 
 JSDefinedChannelController::JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList< Plotline* > inputChannels)

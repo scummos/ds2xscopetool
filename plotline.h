@@ -57,6 +57,7 @@ class Plotline : public QDeclarativeItem
 
 public:
     QSharedDataPointer<Channel> data;
+    bool enabled;
 
 public:
     Plotline(QDeclarativeItem *parent = 0) :
@@ -73,6 +74,9 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)
     {
+        if ( ! enabled ) {
+            return;
+        }
         QColor paintColor = m_color;
         QPen pen(paintColor, m_penWidth);
         painter->setPen(pen);

@@ -20,10 +20,12 @@ public:
 
     ChannelController(QDeclarativeItem* curve);
     virtual void connectToSettingsController(const SettingsController* controller);
+    void resetTimer();
 public slots:
     void setUpdateType(ChannelController::UpdateType type);
     void setUpdateInterval(int msecs);
     void changeDataRange(QString channel, Channel::TransformationKind kind, Channel::Axis axis, float amount);
+    virtual void changeChannelMode(QString channel, QString newMode);
 
     // Make sure to call this default implementation from derived classes,
     // after the code of the derived class has run
@@ -48,11 +50,15 @@ public:
     };
 
     ScopeChannelController(QDeclarativeItem* curve, DeviceCommunicationWorker* worker);
+    virtual void changeChannelMode(QString channel, QString newMode);
     QString channel;
+    bool fakeMode;
+
 public slots:
     virtual void doSingleUpdate();
     void updateReady(CommunicationReply* reply);
 private:
+    void fillCurveWithFakeData();
     DeviceCommunicationWorker* worker;
 };
 
