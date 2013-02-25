@@ -12,6 +12,7 @@ ChannelController::ChannelController(QDeclarativeItem* curve)
 {
     Q_ASSERT(curve && "must pass a PlotLine object as curve");
     updateTimer.setSingleShot(true);
+    updateTimer.setInterval(updateInterval);
 }
 
 void ChannelController::setUpdateInterval(int msecs)
