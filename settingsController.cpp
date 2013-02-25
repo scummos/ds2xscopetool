@@ -5,7 +5,6 @@ QPoint SettingsController::previousMousePosition(-1, -1);
 
 void SettingsController::settingChanged(QString name, QVariant newValue)
 {
-    qDebug() << "setting changed:" << name << newValue;
     if ( name == "UpdateType" ) {
         QString v = newValue.toString();
         emit updateTypeChanged(v == "Freeze" ? ScopeChannelController::SingleShot : ScopeChannelController::Periodically);
@@ -22,7 +21,6 @@ void SettingsController::settingChanged(QString name, QVariant newValue)
 
 void SettingsController::dataRangeChangeCompleted()
 {
-    qDebug() << "data range change completed";
     previousMousePosition = QPoint(-1, -1);
 }
 

@@ -7,7 +7,7 @@
 #include <QDateTime>
 
 ChannelController::ChannelController(QDeclarativeItem* curve)
-    : curve(qobject_cast<Plotline*>(curve))
+    : curve(qobject_cast<PlotLine*>(curve))
     , updateType(SingleShot)
     , updateInterval(50)
 {
@@ -69,7 +69,7 @@ void ChannelController::connectToSettingsController(const SettingsController* co
 
 void ChannelController::autoDataRange()
 {
-    if ( curve->data->data.isEmpty() ) {
+    if ( curve->data->data.size() < 2 ) {
         // nothing to scale
         return;
     }
@@ -77,8 +77,9 @@ void ChannelController::autoDataRange()
         // scale the curve to fit on 1/8 of the screen vertically
         // and on the whole screen horizontally
         const float width = curve->data->data.count() - 1;
-        float ymin = curve->data->data[0], ymax = curve->data->data[0];
-        foreach ( const float value, curve->data->data.values() ) {
+        // ignore the first data point to make scaling work nicely for FFT + DC offset signals
+        float ymin = curve->data->data[1], ymax = curve->data->data[1];
+        foreach ( const float value, curve->data->data.values().mid(1) ) {
             if ( value < ymin ) ymin = value;
             if ( value > ymax ) ymax = value;
         }
@@ -179,13 +180,13 @@ void ScopeChannelController::updateReady(CommunicationReply* reply)
     resetTimer();
 }
 
-JSDefinedChannelController::JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList< Plotline* > inputChannels)
+JSDefinedChannelController::JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList< PlotLine* > inputChannels)
     : ChannelController(curve)
     , inputChannels(inputChannels)
     , textArea(textArea)
 {
     QObject::connect(textArea, SIGNAL(textChanged(const QString&)), this, SLOT(doUpdate(const QString&)));
-    foreach ( const Plotline* chan, inputChannels ) {
+    foreach ( const PlotLine* chan, inputChannels ) {
         QObject::connect(chan, SIGNAL(dataChanged()), this, SLOT(doUpdate()));
         QObject::connect(chan, SIGNAL(dataRangeChanged()), this, SLOT(doUpdate()));
     }
@@ -215,13 +216,57 @@ void JSDefinedChannelController::doUpdate(const QString& text)
     ChannelController::redraw();
 }
 
-FixedFunctionChannelController::FixedFunctionChannelController(QDeclarativeItem* curve, Plotline* channel1, Plotline* channel2)
+FixedFunctionChannelController::FixedFunctionChannelController(QDeclarativeItem* curve, const QList<PlotLine*>& channels)
     : ChannelController(curve)
-    , channel1(channel1)
-    , channel2(channel2)
+    , channels(channels)
     , operationMode(CrossCorrelation)
+    , fftTargetChannel(0)
 {
-    connect(channel1, SIGNAL(dataChanged()), this, SLOT(doUpdate()));
+    updateTimer.setInterval(75);
+    updateTimer.setSingleShot(true);
+    QObject::connect(&updateTimer, SIGNAL(timeout()), this, SLOT(doUpdate()));
+    foreach ( PlotLine* channel, channels ) {
+        QObject::connect(channel, SIGNAL(dataChanged()), this, SLOT(scheduleUpdate()));
+    }
+}
+
+void FixedFunctionChannelController::scheduleUpdate()
+{
+    // Only restart the timer if it's not running, because otherwise
+    // frequent changes in the data will prevent updates
+    if ( ! updateTimer.isActive() ) {
+        updateTimer.start();
+    }
+}
+
+void FixedFunctionChannelController::changeChannelMode(QString channel, QString newMode)
+{
+    if ( curve->property("id") == channel ) {
+        bool autoRange = false;
+        if ( newMode.startsWith("FFT") ) {
+            // only do auto range if coming from another operation mode
+            autoRange = operationMode != FourierTransform;
+            setOperationMode(FourierTransform);
+            bool ok = false;
+            int channel = newMode.split(" ").last().toLower().replace("ch", "").toInt(&ok) - 1;
+            if ( ok && channel < channels.count() ) {
+                fftTargetChannel = channels.at(channel);
+            }
+            else {
+                fftTargetChannel = 0;
+            }
+            doUpdate();
+        }
+        else if ( newMode == "CrossCorr" ) {
+            setOperationMode(CrossCorrelation);
+            autoRange = true;
+        }
+        doUpdate();
+        if ( autoRange ) {
+            autoDataRange();
+        }
+    }
+    ChannelController::changeChannelMode(channel, newMode);
 }
 
 void FixedFunctionChannelController::setOperationMode(FixedFunctionChannelController::OperationMode newMode)
@@ -231,9 +276,13 @@ void FixedFunctionChannelController::setOperationMode(FixedFunctionChannelContro
 
 void FixedFunctionChannelController::doUpdate()
 {
-    if ( operationMode == CrossCorrelation ) {
-        curve->data->data = Utils::crossCorrelation(channel1->data->data, channel2->data->data);
+    if ( operationMode == CrossCorrelation && channels.count() >= 2 ) {
+        curve->data->data = Utils::crossCorrelation(channels[0]->data->data, channels[1]->data->data);
     }
+    if ( operationMode == FourierTransform && fftTargetChannel ) {
+        curve->data->data = Utils::fastFourierTransform(fftTargetChannel->data->data);
+    }
+    redraw();
 }
 
 

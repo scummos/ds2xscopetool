@@ -34,7 +34,7 @@ public slots:
     void redraw();
 
 protected:
-    Plotline* curve;
+    PlotLine* curve;
     QTimer updateTimer;
     UpdateType updateType;
 
@@ -67,30 +67,33 @@ private:
 class JSDefinedChannelController : public ChannelController {
 Q_OBJECT
 public:
-    JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList<Plotline*> inputChannels);
+    JSDefinedChannelController(QDeclarativeItem* curve, QDeclarativeItem* textArea, QList<PlotLine*> inputChannels);
 public slots:
     virtual void doUpdate(const QString& text);
     virtual void doUpdate();
 private:
-    QList<Plotline*> inputChannels;
+    QList<PlotLine*> inputChannels;
     QDeclarativeItem* textArea;
 };
 
 class FixedFunctionChannelController : public ChannelController {
 Q_OBJECT
 public:
-    FixedFunctionChannelController(QDeclarativeItem* curve, Plotline* channel1, Plotline* channel2);
+    FixedFunctionChannelController(QDeclarativeItem* curve, const QList<PlotLine*>& channels);
     enum OperationMode {
         CrossCorrelation,
         FourierTransform
     };
+    virtual void changeChannelMode(QString channel, QString newMode);
 public slots:
+    virtual void scheduleUpdate();
     virtual void doUpdate();
     virtual void setOperationMode(FixedFunctionChannelController::OperationMode newMode);
 private:
-    Plotline* channel1;
-    Plotline* channel2;
+    QList<PlotLine*> channels;
     OperationMode operationMode;
+    QTimer updateTimer;
+    PlotLine* fftTargetChannel;;
 };
 
 #endif

@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     QObject::connect(thread, SIGNAL(started()), worker, SLOT(connectToDevice()));
     thread->start();
 
-    qmlRegisterType<Plotline>("CustomComponents", 1, 0, "PlotLine");
+    qmlRegisterType<PlotLine>("CustomComponents", 1, 0, "PlotLine");
 
     QDeclarativeView view;
     view.setSource(QUrl("./ui.qml"));
@@ -45,21 +45,21 @@ int main(int argc, char *argv[])
     QDeclarativeComponent component(engine, QUrl::fromLocalFile("ChartLine.qml"));
 
 
-    QDeclarativeItem* channel1 = qobject_cast<QDeclarativeItem*>(component.create());
+    PlotLine* channel1 = qobject_cast<PlotLine*>(component.create());
     channel1->setProperty("color", "#FFC800");
     channel1->setParentItem(rootObj);
-    qobject_cast<Plotline*>(channel1)->setChannelNumber(1);
-    qobject_cast<Plotline*>(channel1)->data->channelType = Channel::ScopeChannelType;
+    channel1->setChannelNumber(1);
+    channel1->data->channelType = Channel::ScopeChannelType;
     QMetaObject::invokeMethod(channel1, "setup");
     ScopeChannelController* controller = new ScopeChannelController(channel1, worker);
     controller->channel = "CHAN1";
     controller->setUpdateType(ChannelController::Periodically);
     controller->connectToSettingsController(settingsController);
 
-    QDeclarativeItem* channel2 = qobject_cast<QDeclarativeItem*>(component.create());
+    PlotLine* channel2 = qobject_cast<PlotLine*>(component.create());
     channel2->setParentItem(rootObj);
-    qobject_cast<Plotline*>(channel2)->setChannelNumber(2);
-    qobject_cast<Plotline*>(channel2)->data->channelType = Channel::ScopeChannelType;
+    channel2->setChannelNumber(2);
+    channel2->data->channelType = Channel::ScopeChannelType;
     QMetaObject::invokeMethod(channel2, "setup");
     channel2->setProperty("color", "#1C73FF");
     ScopeChannelController* controller2 = new ScopeChannelController(channel2, worker);
@@ -67,25 +67,25 @@ int main(int argc, char *argv[])
     controller2->setUpdateType(ChannelController::Periodically);
     controller2->connectToSettingsController(settingsController);
 
-    QDeclarativeItem* jsMathLine = qobject_cast<QDeclarativeItem*>(component.create());
+    PlotLine* jsMathLine = qobject_cast<PlotLine*>(component.create());
     jsMathLine->setParentItem(rootObj);
-    qobject_cast<Plotline*>(jsMathLine)->setChannelNumber(3);
-    qobject_cast<Plotline*>(jsMathLine)->data->channelType = Channel::MathChannelType;
+    jsMathLine->setChannelNumber(3);
+    jsMathLine->data->channelType = Channel::MathChannelType;
     QMetaObject::invokeMethod(jsMathLine, "setup");
     jsMathLine->setProperty("color", "#61E000");
     QDeclarativeItem* textArea = view.rootObject()->findChild<QDeclarativeItem*>("jsChannel");
-    QList<Plotline*> lines;
-    lines << qobject_cast<Plotline*>(channel1) << qobject_cast<Plotline*>(channel2);
+    QList<PlotLine*> lines;
+    lines << channel1 << channel2;
     JSDefinedChannelController* jsController = new JSDefinedChannelController(jsMathLine, textArea, lines);
     jsController->connectToSettingsController(settingsController);
 
-    QDeclarativeItem* fixedMathLine = qobject_cast<QDeclarativeItem*>(component.create());
+    PlotLine* fixedMathLine = qobject_cast<PlotLine*>(component.create());
     fixedMathLine->setParentItem(rootObj);
-    qobject_cast<Plotline*>(fixedMathLine)->setChannelNumber(4);
-    qobject_cast<Plotline*>(fixedMathLine)->data->channelType = Channel::MathChannelType;
+    fixedMathLine->setChannelNumber(4);
+    fixedMathLine->data->channelType = Channel::MathChannelType;
     QMetaObject::invokeMethod(fixedMathLine, "setup");
     fixedMathLine->setProperty("color", "#FF4498");
-    FixedFunctionChannelController* fixedController = new FixedFunctionChannelController(fixedMathLine, lines[0], lines[1]);
+    FixedFunctionChannelController* fixedController = new FixedFunctionChannelController(fixedMathLine, QList<PlotLine*>() << lines << jsMathLine);
     fixedController->connectToSettingsController(settingsController);
 
     view.setGeometry(100, 100, 800, 480);

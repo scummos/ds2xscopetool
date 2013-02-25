@@ -300,8 +300,8 @@ Rectangle {
                 }
                 ListElement {
                     text: "AcqTime: %rms"
-                    toggleValues: [ ListElement { value: 50 }, ListElement { value: 100 }, ListElement { value: 300 },
-                                     ListElement { value: 1000 }, ListElement { value: 2000 }, ListElement { value: 20 }
+                    toggleValues: [  ListElement { value: 100 }, ListElement { value: 300 }, ListElement { value: 1000 },
+                                     ListElement { value: 2000 }, ListElement { value: 20 }, ListElement { value: 50 }
                     ]
                     notifyParamName: "AcquisitionTime"
                 }

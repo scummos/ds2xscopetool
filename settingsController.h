@@ -19,7 +19,7 @@ signals:
     void autoRangeRequested();
 private:
     static QPoint previousMousePosition;
-    QList<Plotline*> connectedClients;
+    QList<PlotLine*> connectedClients;
 };
 
 #endif

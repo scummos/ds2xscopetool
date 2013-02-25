@@ -48,7 +48,7 @@ struct Channel : public QSharedData {
     QMap<int, float> data;
 };
 
-class Plotline : public QDeclarativeItem
+class PlotLine : public QDeclarativeItem
 {
     Q_OBJECT
     Q_PROPERTY(QRectF dataRange READ getDataRange WRITE setDataRange NOTIFY dataRangeChanged);
@@ -60,7 +60,7 @@ public:
     bool enabled;
 
 public:
-    Plotline(QDeclarativeItem *parent = 0)
+    PlotLine(QDeclarativeItem *parent = 0)
         : QDeclarativeItem(parent)
         , m_color(Qt::black)
         , m_penWidth(1)
@@ -174,6 +174,6 @@ private:
     int channelNumber;
 };
 
-QML_DECLARE_TYPE(Plotline)
+QML_DECLARE_TYPE(PlotLine)
 
 #endif // LINE_H

@@ -21,12 +21,27 @@ public:
             // so per *ten divisions*. The scale returned by the scope
             // is per *one division*. (25.6 = 2^8 / 10.0)
             result[index] = (byte - yref)/25.6 * scale - offset;
-//             qDebug() << (int) byte << yref << scale << offset << (byte-yref)*scale/10 << result[index];
             index += 1;
         }
         return result;
     };
-    static QMap<int, float> crossCorrelation(QMap<int, float> ch1, QMap<int, float> ch2) {
+    static QMap<int, float> fastFourierTransform(QMap<int, float>& data) {
+        if ( data.size() == 0 ) {
+            return QMap<int, float>();
+        }
+        const QList<float> values = data.values();
+        vec input(data.size());
+        for ( int i = 0; i < values.size(); i++ ) {
+            input[i] = values.at(i);
+        }
+        const vec fourier = abs(fft_real(input));
+        QMap<int, float> resultMap;
+        for ( int i = 0; i < fourier.size(); i++ ) {
+            resultMap[i] = fourier.get(i);
+        }
+        return resultMap;
+    };
+    static QMap<int, float> crossCorrelation(QMap<int, float>& ch1, QMap<int, float>& ch2) {
         Q_ASSERT(ch1.count() == ch2.count() && "channels must have the same amount of sample points");
         Q_ASSERT(ch1.count() % 2 == 0 && "number of points in channel must be even");
         if ( ch1.count() == 0 || ch1.count() != ch2.count() ) {
